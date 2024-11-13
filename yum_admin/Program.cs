@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using yum_admin.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,8 +20,8 @@ builder.Services.AddCors(options =>
 
 
 // EF  等DBCONTEXT命名出來就可以引用了。 
-//builder.Services.AddDbContext<YourDbContext>(options =>
-//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<YumyumdbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("YumYumDB")));
 
 
 // Add services to the container.
