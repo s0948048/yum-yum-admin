@@ -1,0 +1,47 @@
+﻿@model IEnumerable<yum_admin.Models.ViewModels.IngredientInfo>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table d-inline-block m-3">
+    <thead class="w-50">
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.icon)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.attrName)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td style="width:7rem;">
+                    <img src="@Url.Content($"~{item.icon}")" width="30" />
+            </td>
+            <td style="width:7rem;">
+                @Html.DisplayFor(modelItem => item.name)
+            </td>
+            <td style="width:10rem;">
+                @Html.DisplayFor(modelItem => item.attrName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
