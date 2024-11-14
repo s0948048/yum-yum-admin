@@ -3,45 +3,128 @@
 @{
     ViewData["Title"] = "Index";
 }
+<style>
+    tbody tr:hover{
+        background-color:var(--yum-primary-1);
+    }
+</style>
+<h1>食材審查</h1>
 
-<h1>Index</h1>
+<div class="my-5"></div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table d-inline-block m-3">
-    <thead class="w-50">
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.icon)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.attrName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td style="width:7rem;">
-                    <img src="@Url.Content($"~{item.icon}")" width="30" />
-            </td>
-            <td style="width:7rem;">
-                @Html.DisplayFor(modelItem => item.name)
-            </td>
-            <td style="width:10rem;">
-                @Html.DisplayFor(modelItem => item.attrName)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.id">Delete</a>
-            </td>
-        </tr>
+<div class="d-flex">
+    <div class="ms-5" style="width:37%">
+        <h4>用戶新建食材</h4>
+    </div>
+    
+    <div style="width:10%"></div>
+    
+    <div class="ms-3" style="width:40%">
+        <h4>現有食材搜尋</h4>
+    </div>
+</div>
+
+
+<div class="d-flex">
+    
+    <!-- 左側 -->
+    <table class="table ms-5 text-center m-0 p-0 rounded-2" style="background-color:var(--yum-primary-3);width:37%;">
+        <thead class="w-50">
+            <tr class="border-bottom border-dark" style="opacity:80%;">
+                <th></th>
+                <th>
+                    @Html.DisplayNameFor(model => model.icon)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.name)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr style="height:1rem;" class="left-tr">
+                    <td style="width:2rem;">
+                        <input type="checkbox" name="name" value="@(item.id)" />
+                    </td>
+                    <td style="width:5rem;">
+                        <img src="@Url.Content($"~{item.icon}")" width="30" />
+                    </td>
+                    <td style="width:7rem;">
+                        @Html.DisplayFor(modelItem => item.name)
+                    </td>
+                    <td style="width:5rem;">
+                        <a asp-action="Edit" asp-route-id="@item.id">修改</a> 
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    <div style="width:10%;"></div>
+
+    <!-- 右側 -->
+    <table class="table ms-3 text-center rounded-2" style="background-color:var(--yum-primary-3);width:40%;">
+        <thead class="w-50">
+            <tr class="border-bottom border-dark">
+                <th></th>
+                <th>
+                    @Html.DisplayNameFor(model => model.icon)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.name)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.attrName)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr class="right-tr">
+                    <td>
+                        <input type="checkbox" name="name" value="@(item.id)" />
+                    </td>
+                    <td style="width:5rem;">
+                        <img src="@Url.Content($"~{item.icon}")" width="30" />
+                    </td>
+                    <td style="width:7rem;">
+                        @Html.DisplayFor(modelItem => item.name)
+                    </td>
+                    <td style="width:10rem;">
+                        @Html.DisplayFor(modelItem => item.attrName)
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+
+
+
+
+</div>
+
+
+@section Scripts{
+    <script>
+        $('.left-tr').click(function () {
+            var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
+            $(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
+        })
+
+        $('.right-tr').click(function () {
+            var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
+            $(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
+        })
+    </script>
 }
-    </tbody>
-</table>
+
+
