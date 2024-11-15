@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using yum_admin.Models;
+using yum_admin.Models.DataTransferObject;
 using yum_admin.Models.ViewModels;
 
 namespace yum_admin.Controllers
@@ -23,13 +24,12 @@ namespace yum_admin.Controllers
         public async Task<IActionResult> Index()
         {
             var yumyumdbContext = from i in _context.Ingredients
-                                  join ia in _context.IngredAttributes on i.AttributionId equals ia.IngredAttributeId
                                   select new IngredientInfo
                                   {
                                       id = i.IngredientId,
                                       name = i.IngredientName,
-                                      attrId = ia.IngredAttributeId,
-                                      attrName = ia.IngredAttributeName,
+                                      attrId = i.Attribution.IngredAttributeId,
+                                      attrName = i.Attribution.IngredAttributeName,
                                       icon = i.IngredientIcon
                                   };
 
@@ -67,27 +67,25 @@ namespace yum_admin.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IngredientId,IngredientName,AttributionId,IngredientIcon")] Ingredient ingredient)
+        public async Task<IActionResult> Create(IngredientDto i)
         {
-            ingredient.Attribution = _context.IngredAttributes.Find(ingredient.AttributionId)!;
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                ViewData["AttributionId"] = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeId", ingredient.AttributionId);
-                return View(ingredient);
-            }
-
-            foreach (var state in ModelState)
-            {
-                foreach (var error in state.Value.Errors)
+                Ingredient ingredient = new Ingredient
                 {
-                    Console.WriteLine($"Property: {state.Key}, Error: {error.ErrorMessage}");
+                    IngredientId = i.id,
+                    IngredientName = i.name,
+                    AttributionId = i.attrId,
+                    IngredientIcon = i.icon
+                };
 
-                }
-            }
-            
                 _context.Add(ingredient);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
+            }
+
+            ViewData["AttributionId"] = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeId", i.attrId);
+            return View(i);
         }
 
         // GET: Ingredients/Edit/5
@@ -152,18 +150,18 @@ namespace yum_admin.Controllers
             }
 
             var ingredient = from i in _context.Ingredients
-                             join ia in _context.IngredAttributes on i.AttributionId equals ia.IngredAttributeId
-                             select new IngredientInfo
-                             {
-                                 id = i.IngredientId,
-                                 name = i.IngredientName,
-                                 attrId = ia.IngredAttributeId,
-                                 attrName = ia.IngredAttributeName,
-                                 icon = i.IngredientIcon
-                             };
-                
+                             where i.IngredientId == id
+							 select new IngredientInfo
+							 {
+								 id = i.IngredientId,
+								 name = i.IngredientName,
+								 attrId = i.Attribution.IngredAttributeId,
+								 attrName = i.Attribution.IngredAttributeName,
+								 icon = i.IngredientIcon
+							 };
 
-            if (ingredient == null)
+
+			if (ingredient == null)
             {
                 return NotFound();
             }

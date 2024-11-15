@@ -13,7 +13,7 @@ namespace yum_admin.Models.ViewModels
         [DisplayName("屬性編號")]
         public byte attrId { get; set; }
 
-        [DisplayName("標籤")]
+        [DisplayName("圖示")]
         public string? icon { get; set; }
 
         [DisplayName("屬性")]

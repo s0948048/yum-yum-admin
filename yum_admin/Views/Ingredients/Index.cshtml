@@ -13,6 +13,10 @@
 	}
 
 	.cg-btn {
+		background-color: var(--yum-secondary-3);
+	}
+
+	.del-btn{
 		background-color: var(--yum-secondary-2);
 	}
 
@@ -35,7 +39,8 @@
 		left: 42%;
 	}
 	#cg-popup,
-	#store-popup{
+	#store-popup,
+	#del-popup{
 		display:none;
 	}
 </style>
@@ -109,21 +114,27 @@
 			@foreach (var item in Model)
 			{
 				<tr style="height:1rem;" class="left-tr">
-					<td style="width:2rem;">
+					<td style="width:4rem;">
 						<input type="checkbox" name="name" value="@(item.id)" />
 					</td>
-					<td style="width:5rem;">
+					<td style="width:0.3rem;">
 						@if (!string.IsNullOrEmpty(item.icon) && item.icon.StartsWith('/'))
 						{
 							<img src="@Url.Content($"~{item.icon}")" alt="Ingredient Icon" width="30" />
 						}
 					</td>
-					<td style="width:7rem;">
+					<td style="width:6rem;">
 						@item.name
 					</td>
-					<td style="width:5rem;">
-						<button id="@(item.id)-store-btn">存下</button> |
-						<a asp-action="Delete" asp-route-id="@item.id">Delete</a>
+					<td style="width:7rem;">
+						<button id="@(item.id)-store-btn">存下</button> 
+						<!--
+							|
+						<button>
+							<a asp-action="Delete" asp-route-id="@item.id" style="text-decoration:none">刪除</a>
+						</button>
+						-->
+						
 					</td>
 				</tr>
 			}
@@ -131,7 +142,7 @@
 	</table>
 
 
-	<div class="text-center position-relative" style="width:10%;">
+	<div class="text-center position-relative" style="width:10%;"> 
 		<button class="position-fixed start-50 col-1 rounded-2 top-25 ms-1 cg-btn h-25" id="cg-btn">
 			替換
 			<svg height="2.5rem" width="2.5rem" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -147,6 +158,13 @@
 			</svg>
 
 			
+		</button>
+		<button class="position-fixed start-50 col-1 rounded-2 ms-1 del-btn" style="top:65%;height:5.4rem;" id="del-btn">
+			刪除
+
+			<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" /></svg>
+
+
 		</button>
 
 	</div>
@@ -258,8 +276,21 @@
 </div>
 
 
+<!-- popup-del -->
+<div class="py-3 px-5 position-fixed col-3 popup text-center" style="top:35%;" id="del-popup">
+	<h4 class="mb-0" style="width:60%;">
+		確定刪除？
+	</h4>
+	<div class="text-center" id="del-popup-insert">
+	</div>
+	<button id="del-popup-close">返回</button>
+	<button id="del-popup-confirm">確認</button>
+	
+</div>
+
 @section Scripts {
 	<script>
+		// 勾選起來~~~
 		$('.left-tr').click(function () {
 			if ($(event.target).is('button') || $(event.target).is('a')) {
 				// 如果點擊的是按鈕，直接返回，不做其他操作
@@ -268,13 +299,12 @@
 			var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
 			$(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
 		})
-
 		$('.right-tr').click(function () {
 			var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
 			$(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
 		})
 
-
+		// 把食材換成原本有的
 		$('#cg-btn').click(function(){
 			
 			// 抓取被選取的食材資料
@@ -297,8 +327,6 @@
 				$('#cg-popup-toFood').append($(cgIngredient))
 			})
 			
-			
-			
 			$('#cg-popup').show()
 		})
 		$('#cg-popup-close').click(function(){
@@ -314,7 +342,8 @@
 		})
 
 
-		$('.left-tr').find('button').click(function () {
+		// 把新的食材存取下來！
+		$('.left-tr').find('button').first().click(function () {
 			console.log($(this).prop('id').split('-')[0])
 			$('#store-popup').find('input[type="text"]').val($(this).prop('id').split('-')[0])
 			$('#store-popup').show()
@@ -332,6 +361,34 @@
 			$('#store-popup').find('input[type="text"]').val('')
 			$('#store-popup').find('select').val('default')
 		})
+	
+		// 把該食材刪除！
+		$('#del-btn').click(function () {
+
+			// 抓取被選取的食材資料
+			$('.left-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
+				var id = $('<input>').val($(ele).val()).css('display', 'none')
+				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
+				var attr = $('<span>').append('其他')
+				var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
+				console.log(cgIngredient)
+				$('#del-popup-insert').append($(cgIngredient))
+			})
+			$('#del-popup').show()
+		})
+		$('#del-popup-close').click(function () {
+			$('#del-popup').hide()
+			$('#del-popup-insert').empty()
+		})
+		$('#del-popup-confirm').click(function () {
+
+			// ajax
+
+			$('#del-popup').hide()
+			$('#del-popup-insert').empty()
+		})
+	
+	
 	</script>
 }
 
