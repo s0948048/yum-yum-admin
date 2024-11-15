@@ -1,4 +1,4 @@
-﻿@model yum_admin.Models.Ingredient
+﻿@model yum_admin.Models.ViewModels.IngredientInfo
 
 @{
     ViewData["Title"] = "Delete";
@@ -12,27 +12,27 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IngredientName)
+            @Html.DisplayNameFor(model => model.name)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IngredientName)
+            @Html.DisplayFor(model => model.name)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IngredientIcon)
+            @Html.DisplayNameFor(model => model.icon)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IngredientIcon)
+            <img src="@Url.Content($"~{Model.icon}")" width="30"/>
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Attribution)
+            @Html.DisplayNameFor(model => model.attrName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Attribution.IngredAttributeId)
+            @Html.DisplayFor(model => model.attrName)
         </dd>
     </dl>
     
     <form asp-action="Delete">
-        <input type="hidden" asp-for="IngredientId" />
+        <input type="hidden" name="IngredientId" value="@Model.id" />
         <input type="submit" value="Delete" class="btn btn-danger" /> |
         <a asp-action="Index">Back to List</a>
     </form>

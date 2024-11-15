@@ -1,130 +1,338 @@
 ﻿@model IEnumerable<yum_admin.Models.ViewModels.IngredientInfo>
 
 @{
-    ViewData["Title"] = "Index";
+	ViewData["Title"] = "Index";
 }
 <style>
-    tbody tr:hover{
-        background-color:var(--yum-primary-1);
-    }
+	tbody tr:hover {
+		background-color: var(--yum-primary-1);
+	}
+	tr input[type="checkbox"]:checked{
+		width:3rem;
+		height:3rem;
+	}
+
+	.cg-btn {
+		background-color: var(--yum-secondary-2);
+	}
+
+	.cg-btn:hover {
+		opacity:80%;
+	}
+
+	.popup button{
+		border-radius:0.5rem;
+		background-color:lightgray;
+		padding:0.2rem 0.5rem;
+
+	}
+	.popup{
+		max-height:24rem;
+		overflow-y:scroll;
+		border: 0.3rem solid green;
+		background: #FFFFFF;
+		top: 20%;
+		left: 42%;
+	}
+	#cg-popup,
+	#store-popup{
+		display:none;
+	}
 </style>
 <h1>食材審查</h1>
-
+<a asp-action="Create">Create New</a>
 <div class="my-5"></div>
 
+<!-- Init-Show-Header -->
 <div class="d-flex">
-    <div class="ms-5" style="width:37%">
-        <h4>用戶新建食材</h4>
-    </div>
-    
-    <div style="width:10%"></div>
-    
-    <div class="ms-3" style="width:40%">
-        <h4>現有食材搜尋</h4>
-    </div>
-</div>
+	<div class="ms-5" style="width:37%">
+		<h4>用戶新建食材</h4>
+	</div>
 
+	<div style="width:10%"></div>
 
-<div class="d-flex">
-    
-    <!-- 左側 -->
-    <table class="table ms-5 text-center m-0 p-0 rounded-2" style="background-color:var(--yum-primary-3);width:37%;">
-        <thead class="w-50">
-            <tr class="border-bottom border-dark" style="opacity:80%;">
-                <th></th>
-                <th>
-                    @Html.DisplayNameFor(model => model.icon)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.name)
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr style="height:1rem;" class="left-tr">
-                    <td style="width:2rem;">
-                        <input type="checkbox" name="name" value="@(item.id)" />
-                    </td>
-                    <td style="width:5rem;">
-                        <img src="@Url.Content($"~{item.icon}")" width="30" />
-                    </td>
-                    <td style="width:7rem;">
-                        @Html.DisplayFor(modelItem => item.name)
-                    </td>
-                    <td style="width:5rem;">
-                        <a asp-action="Edit" asp-route-id="@item.id">修改</a> 
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+	<div class="ms-3 d-flex align-items-center" style="width:40%">
+		<h4 class="col-4">現有食材搜尋</h4>
 
+		<!-- 搜尋列 -->
+		<div id="searchbar" class="ms-2 mb-2">
+			<form action="POST" class="d-flex justify-content-center align-items-center position-relative">
+				<!-- 地區 -->
+				<div id="searchbar-addr" class="d-flex align-items-center">
 
-    <div style="width:10%;"></div>
+					<select name="city" id="match-city" class="d-inline-block p-1 rounded-1">
+						<option>種類</option>
+					</select>
+				</div>
 
-    <!-- 右側 -->
-    <table class="table ms-3 text-center rounded-2" style="background-color:var(--yum-primary-3);width:40%;">
-        <thead class="w-50">
-            <tr class="border-bottom border-dark">
-                <th></th>
-                <th>
-                    @Html.DisplayNameFor(model => model.icon)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.name)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.attrName)
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr class="right-tr">
-                    <td>
-                        <input type="checkbox" name="name" value="@(item.id)" />
-                    </td>
-                    <td style="width:5rem;">
-                        <img src="@Url.Content($"~{item.icon}")" width="30" />
-                    </td>
-                    <td style="width:7rem;">
-                        @Html.DisplayFor(modelItem => item.name)
-                    </td>
-                    <td style="width:10rem;">
-                        @Html.DisplayFor(modelItem => item.attrName)
-                    </td>
-                    <td>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+				<!-- 輸入文字框 -->
+				<div id="searchbar-text" class="ms-2 d-inline-flex align-items-center position-relative">
+					<input class="form-text col-8" placeholder="食材名稱" type="text" name="food" id="">
+					<button class="ms-2"
+							style="border: 0;border-radius: 18px; right:-1%; width:3.5rem ;height: 2.4rem;">
+						<svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+							<path d="M25.25 25.25L19.8125 19.8125M22.75
+                                12.75C22.75 18.2728 18.2728 22.75 12.75
+                                22.75C7.22715 22.75 2.75 18.2728 2.75
+                                12.75C2.75 7.22715 7.22715 2.75 12.75
+                                2.75C18.2728 2.75 22.75 7.22715 22.75 12.75Z" stroke="#757575" stroke-width="4"
+								  stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</button>
 
+				</div>
 
-
-
-
+			</form>
+		</div>
+	</div>
 
 </div>
 
+<!-- Init-Show-Content -->
+<div class="d-flex">
 
-@section Scripts{
-    <script>
-        $('.left-tr').click(function () {
-            var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
-            $(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
-        })
+	<!-- 左側 -->
+	<table class="table ms-5 text-center m-0 p-0 rounded-2" style="background-color:var(--yum-primary-3);width:37%;">
+		<thead class="w-50">
+			<tr class="border-bottom border-dark" style="opacity:80%;">
+				<th></th>
+				<th>
+					@Html.DisplayNameFor(model => model.icon)
+				</th>
+				<th>
+					@Html.DisplayNameFor(model => model.name)
+				</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in Model)
+			{
+				<tr style="height:1rem;" class="left-tr">
+					<td style="width:2rem;">
+						<input type="checkbox" name="name" value="@(item.id)" />
+					</td>
+					<td style="width:5rem;">
+						@if (!string.IsNullOrEmpty(item.icon) && item.icon.StartsWith('/'))
+						{
+							<img src="@Url.Content($"~{item.icon}")" alt="Ingredient Icon" width="30" />
+						}
+					</td>
+					<td style="width:7rem;">
+						@item.name
+					</td>
+					<td style="width:5rem;">
+						<button id="@(item.id)-store-btn">存下</button> |
+						<a asp-action="Delete" asp-route-id="@item.id">Delete</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 
-        $('.right-tr').click(function () {
-            var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
-            $(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
-        })
-    </script>
+
+	<div class="text-center position-relative" style="width:10%;">
+		<button class="position-fixed start-50 col-1 rounded-2 top-25 ms-1 cg-btn h-25" id="cg-btn">
+			替換
+			<svg height="2.5rem" width="2.5rem" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+				 viewBox="0 0 26.077 26.077" xml:space="preserve">
+				<g>
+					<g id="c103_arrow">
+						<path style="fill:#030104;" d="M25.709,13.552l-9.721,9.994c0,0-1.151,1.219-1.151-0.105c0-1.325,0-4.532,0-4.532
+						s-0.781,0-1.976,0c-3.42,0-9.642,0-12.173,0c0,0-0.688,0.184-0.688-0.861c0.001-1.047,0.001-9.533,0.001-10.279
+						S0.576,7.04,0.576,7.04c2.463,0,8.895,0,12.199,0c1.072,0,1.771,0,1.771,0s0-2.569,0-4.186c0-1.61,1.208-0.395,1.208-0.395
+						s9.081,8.791,10.033,9.744C26.482,12.894,25.709,13.552,25.709,13.552z" />
+					</g>
+				</g>
+			</svg>
+
+			
+		</button>
+
+	</div>
+
+	<!-- 右側 -->
+	<table class="table ms-3 text-center rounded-2" style="background-color:var(--yum-primary-3);width:40%;">
+		<thead class="w-50">
+			<tr class="border-bottom border-dark">
+				<th></th>
+				<th>
+					@Html.DisplayNameFor(model => model.icon)
+				</th>
+				<th>
+					@Html.DisplayNameFor(model => model.name)
+				</th>
+				<th>
+					@Html.DisplayNameFor(model => model.attrName)
+				</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in Model)
+			{
+				<tr class="right-tr">
+					<td>
+						<input type="checkbox" name="name" value="@(item.id)" />
+					</td>
+					<td style="width:5rem;">
+						@if (!string.IsNullOrEmpty(item.icon) && item.icon.StartsWith('/'))
+						{
+							<img src="@Url.Content($"~{item.icon}")" alt="Ingredient Icon" width="30"/>
+						}
+					</td>
+					<td style="width:7rem;">
+						@Html.DisplayFor(modelItem => item.name)
+					</td>
+					<td style="width:10rem;">
+						@Html.DisplayFor(modelItem => item.attrName)
+					</td>
+					<td>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+
+
+
+
+
+</div>
+
+<!-- PopUp-cg -->
+<div class="py-3 position-fixed col-3 text-center popup" id="cg-popup">
+	<p>
+
+		<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-280v-400l200 200-200 200Z" /></svg>
+		將這個食材標籤
+	</p>
+	<div id="cg-popup-insert"></div>
+	<p>
+		<!--
+		<span>岡山香蕉</span>
+		<span>其他</span>
+		-->
+	</p>
+	<p>
+
+		<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-280v-400l200 200-200 200Z" /></svg>
+		變更成現有食材標籤
+	</p>
+	<div id="cg-popup-toFood"></div>
+	<!--
+	<p>
+		<span>香蕉</span>
+		<span>水果類</span>
+	</p>
+	-->
+	<button id="cg-popup-close">返回</button>
+	<button id="cg-popup-confirm">確認</button>
+	
+</div>
+
+<!-- PopUp-storeNew -->
+<div class="py-3 px-5 position-fixed col-3 popup" id="store-popup">
+	<p class="mb-0" style="width:60%;">
+		食材
+	</p>
+	<input class="w-100" type="text"/>
+	<br />
+	<p class="mt-4 mb-0">
+		分類
+	</p>
+	<select class="w-100">
+		<option value="default">分類</option>
+		<option value="value">分類1</option>
+		<option value="value">分類2</option>
+		<option value="value">分類3</option>
+	</select>
+	<br />
+
+	<div class="text-center mt-3">
+		<button id="store-popup-close">返回</button>
+		<button id="store-popup-confirm">確認</button>
+	</div>
+	
+</div>
+
+
+@section Scripts {
+	<script>
+		$('.left-tr').click(function () {
+			if ($(event.target).is('button') || $(event.target).is('a')) {
+				// 如果點擊的是按鈕，直接返回，不做其他操作
+				return;
+			}
+			var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
+			$(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
+		})
+
+		$('.right-tr').click(function () {
+			var boxcheck = $(this).find('input[type="checkbox"]').prop('checked')
+			$(this).find('input[type="checkbox"]').prop('checked', !boxcheck)
+		})
+
+
+		$('#cg-btn').click(function(){
+			
+			// 抓取被選取的食材資料
+			$('.left-tr').find('input[type="checkbox"]:checked').each(function(idx,ele){
+				var id = $('<input>').val($(ele).val()).css('display','none')
+				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
+				var attr = $('<span>').append('其他')
+				var cgIngredient =  $('<p>').append($(id)).append($(name)).append($(attr))
+				console.log(cgIngredient)
+				$('#cg-popup-insert').append($(cgIngredient))
+			})
+			
+			// 抓取要替換成的食材資料
+			$('.right-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
+				var id = $('<input>').val($(ele).val()).css('display', 'none')
+				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
+				var attr = $('<span>').append($(ele).parent().next().next().next().text().trim())
+				var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
+				console.log(cgIngredient)
+				$('#cg-popup-toFood').append($(cgIngredient))
+			})
+			
+			
+			
+			$('#cg-popup').show()
+		})
+		$('#cg-popup-close').click(function(){
+			$('#cg-popup').hide()
+			$('#cg-popup-insert,#cg-popup-toFood').empty()
+		})
+		$('#cg-popup-confirm').click(function () {
+			
+			// ajax
+			
+			$('#cg-popup').hide()
+			$('#cg-popup-insert,#cg-popup-toFood').empty()
+		})
+
+
+		$('.left-tr').find('button').click(function () {
+			console.log($(this).prop('id').split('-')[0])
+			$('#store-popup').find('input[type="text"]').val($(this).prop('id').split('-')[0])
+			$('#store-popup').show()
+		})
+		$('#store-popup-close').click(function () {
+			$('#store-popup').find('input[type="text"]').val('')
+			$('#store-popup').find('select').val('default')
+			$('#store-popup').hide()
+		})
+		$('#store-popup-confirm').click(function () {
+
+			// ajax
+
+			$('#store-popup').hide()
+			$('#store-popup').find('input[type="text"]').val('')
+			$('#store-popup').find('select').val('default')
+		})
+	</script>
 }
 
 

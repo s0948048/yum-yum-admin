@@ -69,14 +69,25 @@ namespace yum_admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IngredientId,IngredientName,AttributionId,IngredientIcon")] Ingredient ingredient)
         {
-            if (ModelState.IsValid)
+            ingredient.Attribution = _context.IngredAttributes.Find(ingredient.AttributionId)!;
+            if (!ModelState.IsValid)
             {
+                ViewData["AttributionId"] = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeId", ingredient.AttributionId);
+                return View(ingredient);
+            }
+
+            foreach (var state in ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"Property: {state.Key}, Error: {error.ErrorMessage}");
+
+                }
+            }
+            
                 _context.Add(ingredient);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AttributionId"] = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeId", ingredient.AttributionId);
-            return View(ingredient);
+                return RedirectToAction("Index");
         }
 
         // GET: Ingredients/Edit/5
@@ -140,15 +151,24 @@ namespace yum_admin.Controllers
                 return NotFound();
             }
 
-            var ingredient = await _context.Ingredients
-                .Include(i => i.Attribution)
-                .FirstOrDefaultAsync(m => m.IngredientId == id);
+            var ingredient = from i in _context.Ingredients
+                             join ia in _context.IngredAttributes on i.AttributionId equals ia.IngredAttributeId
+                             select new IngredientInfo
+                             {
+                                 id = i.IngredientId,
+                                 name = i.IngredientName,
+                                 attrId = ia.IngredAttributeId,
+                                 attrName = ia.IngredAttributeName,
+                                 icon = i.IngredientIcon
+                             };
+                
+
             if (ingredient == null)
             {
                 return NotFound();
             }
 
-            return View(ingredient);
+            return View(await ingredient.FirstAsync());
         }
 
         // POST: Ingredients/Delete/5
