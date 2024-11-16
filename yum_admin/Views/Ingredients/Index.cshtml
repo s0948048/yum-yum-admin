@@ -367,11 +367,11 @@
 
 			// 抓取被選取的食材資料
 			$('.left-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
-				var id = $('<input>').val($(ele).val()).css('display', 'none')
+				var id = $('<input>').css('display', 'none').val($(ele).val())
+				console.log(id.val())
 				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
 				var attr = $('<span>').append('其他')
 				var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
-				console.log(cgIngredient)
 				$('#del-popup-insert').append($(cgIngredient))
 			})
 			$('#del-popup').show()
@@ -383,7 +383,7 @@
 		$('#del-popup-confirm').click(function () {
 
 			// ajax
-
+			
 			$('#del-popup').hide()
 			$('#del-popup-insert').empty()
 		})
