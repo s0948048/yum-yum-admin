@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +12,12 @@ using yum_admin.Models.ViewModels;
 
 namespace yum_admin.Controllers
 {
-    public class IngredientsController : Controller
+    public class IngredientsController(YumyumdbContext context, IAntiforgery antiforgery) : Controller
     {
-        private readonly YumyumdbContext _context;
+        private readonly YumyumdbContext _context = context;
+        private readonly IAntiforgery _antiforgery = antiforgery;
 
-        public IngredientsController(YumyumdbContext context)
-        {
-            _context = context;
-        }
+
 
         // GET: Ingredients
         public async Task<IActionResult> Index()
@@ -36,6 +35,7 @@ namespace yum_admin.Controllers
             return View(await yumyumdbContext.ToListAsync());
         }
 
+        
         // GET: Ingredients/Details/5
         public async Task<IActionResult> Details(short? id)
         {
@@ -55,6 +55,7 @@ namespace yum_admin.Controllers
             return View(ingredient);
         }
 
+        
         // GET: Ingredients/Create
         public IActionResult Create()
         {
@@ -62,6 +63,7 @@ namespace yum_admin.Controllers
             return View();
         }
 
+        
         // POST: Ingredients/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -88,6 +90,7 @@ namespace yum_admin.Controllers
             return View(i);
         }
 
+        
         // GET: Ingredients/Edit/5
         public async Task<IActionResult> Edit(short? id)
         {
@@ -105,6 +108,7 @@ namespace yum_admin.Controllers
             return View(ingredient);
         }
 
+        
         // POST: Ingredients/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -141,6 +145,7 @@ namespace yum_admin.Controllers
             return View(ingredient);
         }
 
+        
         // GET: Ingredients/Delete/5
         public async Task<IActionResult> Delete(short? id)
         {
@@ -169,24 +174,50 @@ namespace yum_admin.Controllers
             return View(await ingredient.FirstAsync());
         }
 
+        
         // POST: Ingredients/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(short id)
+        public async Task<IActionResult> Delete([FromBody] int[] ids)
         {
-            var ingredient = await _context.Ingredients.FindAsync(id);
-            if (ingredient != null)
+            string del_ID = "";
+
+            // 如果POST近來是沒咚咚，就彈回錯誤。
+			if (ids.Length == 0)
+			{
+				return new BadRequestObjectResult(new { success = false, message = "無效的 ID 列表" });
+			}
+
+            // 因為是陣列，特別處理他
+			foreach (int id in ids)
             {
-                _context.Ingredients.Remove(ingredient);
+                Console.WriteLine(id);
+                var ingredient = await _context.Ingredients.FindAsync(Convert.ToInt16(id));
+                if (ingredient != null)
+                {
+                    _context.Ingredients.Remove(ingredient);
+                    del_ID += $"{id},";
+                }
             }
-
+			del_ID = del_ID.Substring(0,del_ID.Length - 1);
+            Console.WriteLine(del_ID);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            return Json(new { success = true, redirectUrl = Url.Action("index", "ingredients"), message = $"已刪除id：{del_ID}" });
+		}
 
+        
         private bool IngredientExists(short id)
         {
             return _context.Ingredients.Any(e => e.IngredientId == id);
         }
-    }
+
+		
+        [HttpGet]
+		public IActionResult GetToken()
+		{
+			// 生成防護令牌
+			var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+			return Ok(new { token = tokens.RequestToken });
+		}
+	}
 }

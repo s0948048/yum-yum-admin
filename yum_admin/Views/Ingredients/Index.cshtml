@@ -368,11 +368,11 @@
 			// 抓取被選取的食材資料
 			$('.left-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
 				var id = $('<input>').css('display', 'none').val($(ele).val())
-				console.log(id.val())
 				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
 				var attr = $('<span>').append('其他')
 				var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
 				$('#del-popup-insert').append($(cgIngredient))
+				// console.log($('#del-popup-insert').find('input').val())
 			})
 			$('#del-popup').show()
 		})
@@ -381,8 +381,34 @@
 			$('#del-popup-insert').empty()
 		})
 		$('#del-popup-confirm').click(function () {
+			var delId =[]
+			$('#del-popup-insert').find('input').each(function (idx, ele) {
+				delId.push($(ele).val())
+			})
+			console.log(delId)
 
-			// ajax
+
+			fetch('/ingredients/getToken')
+				.then(response => response.json())
+				.then(data => {
+					const token = data.token;
+
+					// 使用 AJAX 發送請求時附加防護令牌
+					$.ajax({
+						url: '/ingredients/delete/',
+						method: 'POST',
+						contentType: 'application/json',
+						headers: { 'RequestVerificationToken': token }, // 添加防護令牌
+						data: JSON.stringify(delId),
+						success: function (response) {
+							alert(`刪除成功：${response.message}`);
+							window.location.href = response.redirectUrl;
+						},
+						error: function (xhr) {
+							alert(`刪除失敗：, ${xhr.responseJSON.message}`)
+						}
+					});
+				});
 			
 			$('#del-popup').hide()
 			$('#del-popup-insert').empty()
