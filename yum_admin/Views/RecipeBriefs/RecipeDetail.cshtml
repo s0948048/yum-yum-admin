@@ -1,0 +1,39 @@
+﻿@using yum_admin.Models.ViewModels
+@model yum_admin.Models.ViewModels.RecipeDetailViewModel
+
+
+
+
+
+<h2>@Model.RecipeName</h2>
+
+<p><strong>Recipe 最大版本：</strong>@Model.MaxVersion</p>
+<p><strong>Recipe 前一版本：</strong>@Model.PrevVersion</p>
+<p><strong>最後更新時間：</strong>@Model.RecipeRecDate.ToString("yyyy-MM-dd HH:mm")</p>
+
+<h3>Recipe Fields</h3>
+@foreach (var field in Model.RecipeFields)
+{
+    <div class="recipe-field">
+        <p><strong>簡述：</strong>@field.FieldShot</p>
+        <p><strong>描述：</strong>@field.FieldDescript</p>
+        <p><strong>檢查狀態：</strong>@(field.FieldCheck ? "已通過" : "未通過")</p>
+        <p><strong>評論：</strong>@field.FieldComment</p>
+        <hr />
+    </div>
+}
+
+<h3>選擇性顯示</h3>
+<div>
+    @if (Model.MaxVersion > 0)
+    {
+        <p><strong>僅顯示最大版本內容</strong></p>
+        <p>版本號：@Model.MaxVersion</p>
+    }
+
+    @if (Model.PrevVersion > 0)
+    {
+        <p><strong>僅顯示前一版本內容</strong></p>
+        <p>版本號：@Model.PrevVersion</p>
+    }
+</div>
