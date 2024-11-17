@@ -8,6 +8,6 @@ namespace yum_admin.Models.DataTransferObject
 		public string? name { get; set; }
 
 		[FromForm(Name = "Attr")]
-		public byte attrId { get; set; }
+		public byte? attrId { get; set; }
 	}
 }
