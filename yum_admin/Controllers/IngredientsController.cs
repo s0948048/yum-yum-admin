@@ -32,10 +32,42 @@ namespace yum_admin.Controllers
                                       icon = i.IngredientIcon
                                   };
 
+            ViewBag.Attr = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeName");
             return View(await yumyumdbContext.ToListAsync());
         }
 
-        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FoodResult([FromBody] FoodFilter f)
+        {
+            Console.WriteLine($"{f.attrId}：{f.name}");
+
+
+            if (!ModelState.IsValid)
+            {
+                return new BadRequestObjectResult(new { success = false, message = "查詢無效" });
+
+			}
+            var ingredients = from i in _context.Ingredients
+                              where (f.name == null || i.IngredientName.Contains(f.name)) &&
+                                    (f.attrId > 0 || i.AttributionId == f.attrId)
+                              select new IngredientInfo
+                              {
+                                  id = i.IngredientId,
+                                  name = i.IngredientName,
+                                  attrId = i.Attribution.IngredAttributeId,
+                                  attrName = i.Attribution.IngredAttributeName,
+                                  icon = i.IngredientIcon
+                              };
+
+
+
+
+			return Json(await ingredients.ToListAsync());
+        }
+
+
+
         // GET: Ingredients/Details/5
         public async Task<IActionResult> Details(short? id)
         {

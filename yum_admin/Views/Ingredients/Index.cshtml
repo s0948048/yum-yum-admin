@@ -63,17 +63,17 @@
 		<div id="searchbar" class="ms-2 mb-2">
 			<form action="POST" class="d-flex justify-content-center align-items-center position-relative">
 				<!-- 地區 -->
-				<div id="searchbar-addr" class="d-flex align-items-center">
+				<div>
 
-					<select name="city" id="match-city" class="d-inline-block p-1 rounded-1">
-						<option>種類</option>
+					<select name="Attr" id="match-Attr" class="d-inline-block p-1 rounded-1" asp-items="@ViewBag.Attr">
+						<option value="0">種類</option>
 					</select>
 				</div>
 
 				<!-- 輸入文字框 -->
 				<div id="searchbar-text" class="ms-2 d-inline-flex align-items-center position-relative">
-					<input class="form-text col-8" placeholder="食材名稱" type="text" name="food" id="">
-					<button class="ms-2"
+					<input class="form-text col-8" placeholder="食材名稱" type="text" name="Food">
+					<button class="ms-2" id="food-filter" type="submit" id="#food-filter"
 							style="border: 0;border-radius: 18px; right:-1%; width:3.5rem ;height: 2.4rem;">
 						<svg width="24" height="24" viewBox="0 0 28 28" fill="none">
 							<path d="M25.25 25.25L19.8125 19.8125M22.75
@@ -186,7 +186,7 @@
 				<th></th>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody id="insert-site">
 			@foreach (var item in Model)
 			{
 				<tr class="right-tr">
@@ -211,12 +211,6 @@
 			}
 		</tbody>
 	</table>
-
-
-
-
-
-
 </div>
 
 <!-- PopUp-cg -->
@@ -313,7 +307,7 @@
 				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
 				var attr = $('<span>').append('其他')
 				var cgIngredient =  $('<p>').append($(id)).append($(name)).append($(attr))
-				console.log(cgIngredient)
+				// console.log(cgIngredient)
 				$('#cg-popup-insert').append($(cgIngredient))
 			})
 			
@@ -323,7 +317,7 @@
 				var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
 				var attr = $('<span>').append($(ele).parent().next().next().next().text().trim())
 				var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
-				console.log(cgIngredient)
+				// console.log($(ele).val())
 				$('#cg-popup-toFood').append($(cgIngredient))
 			})
 			
@@ -413,8 +407,37 @@
 			$('#del-popup').hide()
 			$('#del-popup-insert').empty()
 		})
-	
-	
+
+
+		$('#food-filter').click(function(e){
+			e.preventDefault();
+			e.stopPropagation();
+
+			fetch('/ingredients/getToken')
+				.then(response => response.json())
+				.then(data => {
+					const token = data.token;
+
+					// 使用 AJAX 發送請求時附加防護令牌
+					$.ajax({
+						url: '/ingredients/FoodResult/',
+						method: 'POST',
+						contentType: 'application/json',
+						headers: { 'RequestVerificationToken': token }, // 添加防護令牌
+						data: JSON.stringify({ attrId: 1, name: '' }),
+						success: function (response) {
+							console.log(`查詢成功`, response);
+						},
+						error: function (xhr) {
+							console.log(`查詢失敗：`, xhr.responseJSON.message);
+						}
+					});
+				});
+		})
+
+		
+		
+
 	</script>
 }
 
