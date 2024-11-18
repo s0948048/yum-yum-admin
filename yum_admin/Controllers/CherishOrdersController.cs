@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using yum_admin.Models;
+using yum_admin.Models.DataTransferObject;
 
 namespace yum_admin.Controllers
 {
@@ -23,6 +24,25 @@ namespace yum_admin.Controllers
         {
             var yumyumdbContext = _context.CherishOrders.Include(c => c.GiverUser).Include(c => c.IngredAttribute).Include(c => c.Ingredient).Include(c => c.TradeStateCodeNavigation);
             return View(await yumyumdbContext.ToListAsync());
+        }
+
+        // GET: CherishOrders
+        public async Task<IActionResult> Cherish()
+        {
+            var cherishOrders = from c in _context.CherishOrders
+                                select new CherishIndexDto
+                                {
+                                    CherishId = c.CherishId,
+                                    TradeStateDescript = c.TradeStateCodeNavigation.TradeStateDescript,
+                                    IngredientName = c.Ingredient.IngredientName,
+                                    IngredAttributeName = c.IngredAttribute.IngredAttributeName,
+                                    ReasonText = c.CherishOrderCheck!.RejectText,
+                                    SubmitDate = c.SubmitDate,
+                                    ReserveDate =c.ReserveDate
+                                };
+
+
+            return View(await cherishOrders.ToListAsync());
         }
 
         // GET: CherishOrders/Details/5
