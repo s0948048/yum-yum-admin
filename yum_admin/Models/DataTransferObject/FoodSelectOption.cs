@@ -2,8 +2,10 @@
 
 namespace yum_admin.Models.DataTransferObject
 {
-	public class FoodFilter
+	public class FoodSelectOption
 	{
+		public short? id { get; set; }
+
 		[FromForm(Name = "Food")]
 		public string? name { get; set; }
 

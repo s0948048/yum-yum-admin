@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
@@ -59,7 +60,7 @@ namespace yum_admin.Controllers
 		// POST: AJAX 動態篩選右邊食材。回傳PartialView。
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> FoodResult([FromBody] FoodFilter f)
+		public async Task<IActionResult> FoodResult([FromBody] FoodSelectOption f)
 		{
 			// 驗證類別
 			if (!ModelState.IsValid)
@@ -133,7 +134,6 @@ namespace yum_admin.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> ChangeFood([FromBody] FoodReplaceDto f)
 		{
-			string replaceID = "";
 			if (f is null)
 			{
 				return new BadRequestObjectResult(new { success = false, message = "並未正確傳入資料" });
@@ -147,108 +147,144 @@ namespace yum_admin.Controllers
 				return new BadRequestObjectResult(new { success = false, message = "請傳入有效的結果食材" });
 			}
 
+			// 暫存那些要替換的實體
 			List<RecipeIngredient> newRecipeIngredients = new List<RecipeIngredient>();
-			List<Task> newTasks = new List<Task>();
+
 			// 替換邏輯：只有兩個功能區可以自己建立食材，因此只須操作兩個區域。
 
-			newTasks.Add(Task.Run(async () =>
+			// 2. 把冰箱中的食材替換
+			var ingredientRefrig = await (from res in _context.RefrigeratorStores
+										  where f.originFood.Contains(res.IngredientId)
+										  select res).ToListAsync();
+
+			var ingredientRecord = await _context.RecipeIngredients
+									.Where(res => f.originFood.Contains(res.IngredientId))
+									.ToListAsync();
+
+			// 食譜沒有就跳過。
+			if(ingredientRefrig.Any())
 			{
 				// 1. 把食譜中的食材替換
-				//var ingredientRecord = await (from res in _context.RecipeIngredients
-				//							  where f.originFood.Contains(res.IngredientId)
-				//							  select res).ToListAsync();
-				var ingredientRecord = await _context.RecipeIngredients
-										.AsNoTracking()
-										.Where(res => f.originFood.Contains(res.IngredientId))
-										.ToListAsync();
+				// 1.1. 抓取有關連的食譜們
+				// 相關的紀錄們，先暫存下來
+				foreach (RecipeIngredient r in ingredientRecord)
+				{
+					// 有件事情要注意，假設 1399,14 1399,15 要同時換成 1399,16 會有兩筆造成衝突
+					if (newRecipeIngredients.Any(res => res.RecipeId == r.RecipeId))
+					{
+						_context.RecipeIngredients.Remove(r);
+						continue;
+					}
+					newRecipeIngredients.Add(new RecipeIngredient
+					{
+						RecipeId = r.RecipeId,
+						IngredientId = f.afterFood,
+						UnitId = r.UnitId,
+						Quantity = r.Quantity,
+					});
+				}
 
-				// 2. 把冰箱中的食材替換
-				var ingredientRefrig = await (from res in _context.RefrigeratorStores
-											  where f.originFood.Contains(res.IngredientId)
-											  select res).ToListAsync();
+				// 1.2. 因為有暫存ㄌ，所以直接移除他們！
+				// 因為是複合鍵，所以我們選擇的方式是先新增，再刪除。
+				// ver.2 修正：因為add 下一次就是一次指令，因此換成LIST 最後再加。
+				foreach (RecipeIngredient r in ingredientRecord)
+				{
+					_context.RecipeIngredients.Remove(r);
+				}
+				await _context.SaveChangesAsync();
 
+				// 再貼回去資料庫。
 				using (var scope = _serviceProvider.CreateScope())
 				{
 					var newContext = scope.ServiceProvider.GetRequiredService<YumyumdbContext>();
+					context.ChangeTracker.Clear();
 
+					await newContext.RecipeIngredients.AddRangeAsync(newRecipeIngredients);
 
-					// 因為是複合鍵，所以我們選擇的方式是先新增，再刪除。
-					// ver.2 修正：因為add 下一次就是一次指令，因此換成LIST 最後再加。
-					foreach (RecipeIngredient r in ingredientRecord)
-					{
-						newRecipeIngredients.Add(new RecipeIngredient
-						{
-							RecipeId = r.RecipeId,
-							UnitId = r.UnitId,
-							Quantity = r.Quantity,
-							IngredientId = f.afterFood
-						});
-
-						var trackedEntity = _context.RecipeIngredients.Local.FirstOrDefault(e => e.RecipeId == r.RecipeId && e.IngredientId == r.IngredientId);
-						if (trackedEntity != null)
-						{
-							_context.Entry(trackedEntity).State = EntityState.Detached;
-						}
-						newContext.RecipeIngredients.Remove(r);
-					}
 					await newContext.SaveChangesAsync();
 				}
-						
+			}
 
-				using (var scope = _serviceProvider.CreateScope())
+			// 冰箱沒有就跳過。
+			if (newRecipeIngredients.Any())
+			{
+				// 冰箱就直接修改即可。
+				foreach (RefrigeratorStore r in ingredientRefrig)
 				{
-					// 冰箱就直接修改即可。
-					foreach (RefrigeratorStore r in ingredientRefrig)
-					{
-						r.IngredientId = f.afterFood;
-						_context.RefrigeratorStores.Update(r);
-					}
-					await _context.SaveChangesAsync();
+					r.IngredientId = f.afterFood;
+					_context.RefrigeratorStores.Update(r);
 				}
+				await _context.SaveChangesAsync();
+			}
 
-			}));
 
-			await Task.WhenAll(newTasks);
 
-			_context.ChangeTracker.Clear();
-			await _context.RecipeIngredients.AddRangeAsync(newRecipeIngredients);
+			// 如果都沒有，直接回傳。
+			if (!ingredientRefrig.Any() && !newRecipeIngredients.Any())
+			{
+				var IRemove = await _context.Ingredients
+				.Where(i => f.originFood.Contains(i.IngredientId)).ToListAsync();
+				_context.Ingredients.RemoveRange(IRemove);
+				await _context.SaveChangesAsync();
+
+				return Json(new{ seccess = true, message = "無食譜、冰箱食材資料異動" , redirectUrl = Url.Action("index", "ingredients") });
+			}
+
+			var iRemove = await _context.Ingredients
+				.Where(i => f.originFood.Contains(i.IngredientId)).ToListAsync();
+			_context.Ingredients.RemoveRange(iRemove);
 			await _context.SaveChangesAsync();
-			replaceID = replaceID.Substring(0, replaceID.Length - 1);
-			Console.WriteLine(replaceID);
-			Console.WriteLine(f.afterFood);
+
+			string replaceID = string.Join(',', f.originFood);
 			return Json(new { success = true, redirectUrl = Url.Action("index", "ingredients"), message = $"已替換id：{replaceID} 結果id：{f.afterFood}" });
 		}
 
 
 
 
-		// GET: Ingredients/Delete/5
-		public async Task<IActionResult> Delete(short? id)
+		//POST: Ingredients/Store/5
+		[HttpPost, ActionName("Store")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Store([FromBody] FoodSelectOption f)
 		{
-			if (id == null)
+			if (f is null)
 			{
-				return NotFound();
+				return new BadRequestObjectResult(new { success = false, message = "無效的請求" });
 			}
 
-			var ingredient = from i in _context.Ingredients
-							 where i.IngredientId == id
-							 select new IngredientInfo
-							 {
-								 id = i.IngredientId,
-								 name = i.IngredientName,
-								 attrId = i.Attribution.IngredAttributeId,
-								 attrName = i.Attribution.IngredAttributeName,
-								 icon = i.IngredientIcon
-							 };
-
-
-			if (ingredient == null)
+			if (f.attrId == 0)
 			{
-				return NotFound();
+				return new BadRequestObjectResult(new { success = false, message = "無效的屬性值" });
 			}
 
-			return View(await ingredient.FirstAsync());
+			Console.WriteLine(f.id);
+
+			Ingredient? ingredient = await _context.Ingredients
+				.Where(i => i.IngredientId == f.id).FirstOrDefaultAsync();
+
+			if (ingredient is null)
+			{
+				return new BadRequestObjectResult(new { success = false, message = "無效的食材" });
+			}
+
+			ingredient.AttributionId = (byte)f.attrId!;
+			await _context.SaveChangesAsync();
+
+			ingredient = await _context.Ingredients
+				.Where(i => i.IngredientId == f.id).FirstOrDefaultAsync();
+
+			ingredient!.Attribution = await _context.IngredAttributes
+					.Where(a => a.IngredAttributeId == f.attrId!)!.FirstOrDefaultAsync() ?? throw new InvalidOperationException("未找到符合條件的值");
+
+			return Json(new
+			{
+				success = true,
+				message = $"已建立  {ingredient!.Attribution.IngredAttributeName} - {ingredient.IngredientName}",
+				redirectUrl = Url.Action("index", "ingredients")
+			});
 		}
+
+
 
 
 		// POST: Ingredients/Delete/5
@@ -380,5 +416,36 @@ namespace yum_admin.Controllers
 		//	ViewData["AttributionId"] = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeId", ingredient.AttributionId);
 		//	return View(ingredient);
 		//}
+
+
+		// GET: Ingredients/Delete/5
+		//public async Task<IActionResult> Delete(short? id)
+		//{
+		//	if (id == null)
+		//	{
+		//		return NotFound();
+		//	}
+
+		//	var ingredient = from i in _context.Ingredients
+		//					 where i.IngredientId == id
+		//					 select new IngredientInfo
+		//					 {
+		//						 id = i.IngredientId,
+		//						 name = i.IngredientName,
+		//						 attrId = i.Attribution.IngredAttributeId,
+		//						 attrName = i.Attribution.IngredAttributeName,
+		//						 icon = i.IngredientIcon
+		//					 };
+
+
+		//	if (ingredient == null)
+		//	{
+		//		return NotFound();
+		//	}
+
+		//	return View(await ingredient.FirstAsync());
+		//}
+
+
 	}
 }

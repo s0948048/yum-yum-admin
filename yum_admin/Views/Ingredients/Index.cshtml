@@ -3,8 +3,9 @@
 
 @{
 	ViewData["Title"] = "Index";
+	string date = DateTime.Now.ToString("hhmmss");
 }
-<link rel="stylesheet" href="~/css/Ingredient/index.css"/>
+<link rel="stylesheet" href="~/css/Ingredient/index.css?@date" />
 
 <h1>食材審查</h1>
 <a asp-action="Create">Create New</a>
@@ -190,7 +191,6 @@
 	<p><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-280v-400l200 200-200 200Z" /></svg>
 		變更成現有食材標籤
 	</p>
-	
 
 	<!-- 食材載入點 -->
 	<div id="cg-popup-toFood"></div>
@@ -224,18 +224,33 @@
 
 <!-- popup-del -->
 <div class="py-3 px-5 position-fixed col-3 popup text-center" style="top:35%;" id="del-popup">
-	<h4 class="mb-0" style="width:60%;">
+	<h4 class="mb-3" style="width:60%;">
 		確定刪除？
 	</h4>
-	<div class="text-center" id="del-popup-insert">
-	</div>
+
+	<p>
+		<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-280v-400l200 200-200 200Z" /></svg>
+		左側食材刪除
+	</p>
+
+	<!-- 食材載入點 -->
+	<div class="text-center" id="del-popup-left"></div>
+
+	<p>
+		<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-280v-400l200 200-200 200Z" /></svg>
+		右側食材刪除
+	</p>
+
+	<!-- 食材載入點 -->
+	<div class="text-center" id="del-popup-right"></div>
+	
 	<button id="del-popup-close">返回</button>
 	<button id="del-popup-confirm">確認</button>
 	
 </div>
 
 @section Scripts {
-	<script src="~/js/ingredient/index.js"></script>
+	<script src="~/js/ingredient/index.js?@date"></script>
 }
 
 

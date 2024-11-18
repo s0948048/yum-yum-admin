@@ -22,13 +22,15 @@ function AllEmpty(jq_div) {
 // 生成新標籤放到彈出視窗
 // 參數1.JQ物件，要放在哪個div
 // 參數2.要放的物件資料來源
-function PutDataTo_cg_PopUp(jq_insertDiv, ele) {
-	var id = $('<input type="textbox">').val($(ele).val()).css('display', 'none')
-	var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
-	var attr = $('<span>').append($(ele).parent().next().next().next().text().trim())
+function PutDataTo__PopUp(jq_insertDiv, ele) {
+	var id = $('<input>').val($(ele).val()).css('display', 'none')
+	var lrDataFromName = $(ele).parent().next().next()
+	var name = $('<span class="me-2">').append(lrDataFromName.text().trim())
+	var attr = $('<span>').append(lrDataFromName.next().text().trim())
 	var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
 	jq_insertDiv.append($(cgIngredient))
 }
+
 //--------------------------------------
 
 
@@ -46,10 +48,10 @@ $('#left-site,#insert-site').on('click', 'tr', function (e) { // 第二個參數
 
 // 把食材換成原本有的
 $('#cg-btn').click(function () {
-
+	AllEmpty($('#cg-popup-insert,#cg-popup-toFood'))
 	// 抓取被選取的食材資料
 	$('.left-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
-		PutDataTo_cg_PopUp($('#cg-popup-insert'),ele)
+		PutDataTo__PopUp($('#cg-popup-insert'),ele)
 	})
 
 	// 目標只能1種，大於1的要擋掉
@@ -66,7 +68,7 @@ $('#cg-btn').click(function () {
 	}
 	// 抓取要替換成的食材資料
 	$('.right-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
-		PutDataTo_cg_PopUp($('#cg-popup-toFood'), ele)
+		PutDataTo__PopUp($('#cg-popup-toFood'), ele)
 	})
 
 	$('#cg-popup').show()
@@ -93,11 +95,11 @@ $('#cg-popup-confirm').click(function () {
 		headers: { 'RequestVerificationToken': HTTPToken }, // 添加防護令牌
 		data: JSON.stringify({ originFood: originFood, afterFood: afterFood }),
 		success: function (response) {
-			alert(`替換成功：${response.message}`);
-			//window.location.href = response.redirectUrl;
+			alert(`執行成功：${response.message}`);
+			window.location.href = response.redirectUrl;
 		},
 		error: function (xhr) {
-			alert(`替換成功：, ${xhr.responseJSON.message}`)
+			alert(`執行失敗：, ${xhr.responseJSON.message}`)
 		}
 	})
 
@@ -124,7 +126,28 @@ $('#store-popup-close').click(function () {
 })
 $('#store-popup-confirm').click(function () {
 
-	// ajax
+	var  id = $('#store-popup').find('input').val()
+	var attrId = $('#store-popup').find('select').val()
+	if (attrId == 0) {
+		alert(`請選擇正確的屬性。`);
+		return;
+	}
+
+	$.ajax({
+		url: '/ingredients/store/',
+		method: 'POST',
+		contentType: 'application/json',
+		headers: { 'RequestVerificationToken': HTTPToken }, // 添加防護令牌
+		data: JSON.stringify({ attrId: attrId, id: id }),
+		success: function (response) {
+			alert(`儲存成功：${response.message}`);
+			window.location.href = response.redirectUrl;
+		},
+		error: function (xhr) {
+			alert(`儲存失敗：, ${xhr.responseJSON.message}`)
+		}
+	})
+
 
 	downPopUp($(this))
 	AllReset($('#store-popup'))
@@ -134,25 +157,34 @@ $('#store-popup-confirm').click(function () {
 
 // 把該食材刪除！
 $('#del-btn').click(function () {
+	AllEmpty($('#del-popup-left,#del-popup-right'));
+	var rightNum = -1;
 
 	// 抓取被選取的食材資料
 	$('.left-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
-		var id = $('<input>').css('display', 'none').val($(ele).val())
-		var name = $('<span class="me-2">').append($(ele).parent().next().next().text().trim())
-		var attr = $('<span>').append('其他')
-		var cgIngredient = $('<p>').append($(id)).append($(name)).append($(attr))
-		$('#del-popup-insert').append($(cgIngredient))
-		// console.log($('#del-popup-insert').find('input').val())
+
+		PutDataTo__PopUp($('#del-popup-left'), ele);
 	})
+	$('.right-tr').find('input[type="checkbox"]:checked').each(function (idx, ele) {
+		rightNum = idx;
+		PutDataTo__PopUp($('#del-popup-right'), ele);
+	})
+	if (rightNum > -1) {
+		if (!confirm(`您已選擇現有食材，是否要刪除？`)) {
+			return;
+		}
+	}
+	
+
 	$('#del-popup').show()
 })
 $('#del-popup-close').click(function () {
 	downPopUp($(this))
-	AllEmpty($('#del-popup-insert'))
+	AllEmpty($('#del-popup-left,#del-popup-right'));
 })
 $('#del-popup-confirm').click(function () {
 	var delId = []
-	$('#del-popup-insert').find('input').each(function (idx, ele) {
+	$('#del-popup-left,#del-popup-right').find('input').each(function (idx, ele) {
 		delId.push($(ele).val())
 	})
 
@@ -173,7 +205,7 @@ $('#del-popup-confirm').click(function () {
 	})
 
 	downPopUp($(this))
-	AllEmpty($('#del-popup-insert'))
+	AllEmpty($('#del-popup-left,#del-popup-right'));
 })
 
 
