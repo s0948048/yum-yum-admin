@@ -99,7 +99,7 @@ $('#cg-popup-confirm').click(function () {
 			window.location.href = response.redirectUrl;
 		},
 		error: function (xhr) {
-			alert(`執行失敗：, ${xhr.responseJSON.message}`)
+			alert(`執行失敗： ${xhr.responseJSON.message}`)
 		}
 	})
 
@@ -144,7 +144,7 @@ $('#store-popup-confirm').click(function () {
 			window.location.href = response.redirectUrl;
 		},
 		error: function (xhr) {
-			alert(`儲存失敗：, ${xhr.responseJSON.message}`)
+			alert(`儲存失敗： ${xhr.responseJSON.message}`)
 		}
 	})
 
@@ -200,7 +200,7 @@ $('#del-popup-confirm').click(function () {
 			window.location.href = response.redirectUrl;
 		},
 		error: function (xhr) {
-			alert(`刪除失敗：, ${xhr.responseJSON.message}`)
+			alert(`刪除失敗： ${xhr.responseJSON.message}`)
 		}
 	})
 
@@ -238,7 +238,7 @@ $('#food-filter').click(function (e) {
 				Newmatchname = matchname;
 			},
 			error: function (xhr) {
-				console.log(`查詢失敗：`, xhr.responseJSON.message);
+				console.log(`查詢失敗： ${xhr.responseJSON.message}`);
 			}
 		});		
 		

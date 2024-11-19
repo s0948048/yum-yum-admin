@@ -19,6 +19,8 @@ public partial class CherishOrderCheck
 
     public string? ValidDatePhoto { get; set; }
 
+    public DateOnly ModifyDate { get; set; }
+
     public virtual CherishOrder Cherish { get; set; } = null!;
 
     public virtual CherishCheckReason? Reason { get; set; }

@@ -1,5 +1,7 @@
 ﻿body {
-/*    font-family: 'lato', sans-serif;*/
+    /*    font-family: 'lato', sans-serif;*/
+
+    overflow-y: scroll;
 }
 
 .container {
@@ -28,7 +30,7 @@ h2 {
     /* justify-content: space-between; */
     align-items: center;
     /* 垂直置中 */
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -37,7 +39,7 @@ h2 {
     /* font-size: 14px; */
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    padding:20px 15px;
+    padding:15px 15px;
 }
 
 .responsive-table .table-row {

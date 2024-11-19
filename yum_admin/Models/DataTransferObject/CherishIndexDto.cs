@@ -4,6 +4,8 @@
     {
         public int CherishId { get; set; }
 
+        public byte TradeStateCode { get; set; }
+
         public string? TradeStateDescript { get; set; }
 
         public string? IngredientName { get; set; }
@@ -15,5 +17,7 @@
         public DateOnly SubmitDate { get; set; }
 
         public DateTime? ReserveDate { get; set; }
+
+        public DateOnly ModifyDate { get; set; }
     }
 }
