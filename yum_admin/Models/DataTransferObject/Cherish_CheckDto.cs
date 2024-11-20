@@ -43,9 +43,6 @@
 
         public string? ContactOther { get; set; }
 
-        public virtual ICollection<CherishTradeTime> CherishTradeTimes { get; set; } = new List<CherishTradeTime>();
-
-
         public string? CherishPhoto { get; set; }
 
         public string? OtherPhoto { get; set; }

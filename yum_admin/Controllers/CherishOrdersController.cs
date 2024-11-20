@@ -22,7 +22,12 @@ namespace yum_admin.Controllers
         public async Task<IActionResult> Cherish()
         {
             List<int> cherishAttr = [1,4,5,6];
-            ViewBag.Attr = new SelectList(_context.IngredAttributes.Where(i => cherishAttr.Contains(i.IngredAttributeId)), "IngredAttributeId", "IngredAttributeName");
+            
+            ViewBag.Attr = new SelectList(
+                _context.IngredAttributes.Where(i => cherishAttr.Contains(i.IngredAttributeId)), 
+                "IngredAttributeId", 
+                "IngredAttributeName"
+                );
 
             var cherishOrders = from c in _context.CherishOrders
                                 where cherishAttr.Contains(c.IngredAttributeId)
@@ -130,7 +135,20 @@ namespace yum_admin.Controllers
         // GET: CherishOrders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            var orderDetail = from c in _context.CherishOrders
+
+            var timeSpan = await (from d in _context.CherishTradeTimes
+                                  where d.CherishId == id
+                                  select d).ToListAsync();
+            
+            ViewBag.Mon = timeSpan.Where(d => d.TradeTimeCode.Contains("Mon"));
+            ViewBag.Tue = timeSpan.Where(d => d.TradeTimeCode.Contains("Tue"));
+            ViewBag.Wes = timeSpan.Where(d => d.TradeTimeCode.Contains("Wes"));
+            ViewBag.Thr = timeSpan.Where(d => d.TradeTimeCode.Contains("Thr"));
+            ViewBag.Fri = timeSpan.Where(d => d.TradeTimeCode.Contains("Fri"));
+            ViewBag.Sat = timeSpan.Where(d => d.TradeTimeCode.Contains("Sat"));
+            ViewBag.Sun = timeSpan.Where(d => d.TradeTimeCode.Contains("Sun"));
+			
+			var orderDetail = await (from c in _context.CherishOrders
                               where c.CherishId == id
                               select new Cherish_CheckDto
                               {
@@ -156,11 +174,10 @@ namespace yum_admin.Controllers
                                   CherishPhoto = c.CherishOrderCheck.CherishPhoto,
                                   OtherPhoto = c.CherishOrderCheck.OtherPhoto,
                                   ValidDatePhoto = c.CherishOrderCheck.ValidDatePhoto,
-                                  CherishTradeTimes = _context.CherishTradeTimes.Where(c => c.CherishId == id).ToList()
-                              };
+							  }).FirstAsync();
 
 
-            return View(await orderDetail.FirstAsync());
+            return View(orderDetail);
         }
 
         // POST: CherishOrders/Edit/5
