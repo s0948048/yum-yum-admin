@@ -1,39 +1,204 @@
 ﻿@using yum_admin.Models.ViewModels
 @model yum_admin.Models.ViewModels.RecipeDetailViewModel
 
+<!--狀態欄最後一顆按鈕樣式-->
+@functions {
+    private string GetCircleBackgroundColor(int statusCode, bool isMaxVersion)
+    {
+        if (isMaxVersion)
+        {
+            return "background-color: #28a745; color: #fff;"; // Max Version 樣式
+        }
 
+        return statusCode switch
+        {
+            0 => "background-color: #d3d3d3; color: #000;", // light
+            1 or 2 or 3 => "background-color: #ffc107; color: #000;", // Warning
+            4 => "background-color: #6c757d; color: #fff;", // Secondary
+            5 => "background-color: #dc3545; color: #fff;", // Danger
+            _ => "background-color: #6c757d; color: #fff;" // Default
+        };
+    }
 
+    private string GetTextColor(int statusCode)
+    {
+        return statusCode switch
+        {
+            4 => "text-warning",
+            1 or 2 or 3 => "text-muted",
+            _ => "text-muted"
+        };
+    }
 
-
-<h2>@Model.RecipeName</h2>
-
-<p><strong>Recipe 最大版本：</strong>@Model.MaxVersion</p>
-<p><strong>Recipe 前一版本：</strong>@Model.PrevVersion</p>
-<p><strong>最後更新時間：</strong>@Model.RecipeRecDate.ToString("yyyy-MM-dd HH:mm")</p>
-
-<h3>Recipe Fields</h3>
-@foreach (var field in Model.RecipeFields)
-{
-    <div class="recipe-field">
-        <p><strong>簡述：</strong>@field.FieldShot</p>
-        <p><strong>描述：</strong>@field.FieldDescript</p>
-        <p><strong>檢查狀態：</strong>@(field.FieldCheck ? "已通過" : "未通過")</p>
-        <p><strong>評論：</strong>@field.FieldComment</p>
-        <hr />
-    </div>
+    private string GetStatusText(int statusCode)
+    {
+        return statusCode switch
+        {
+            1 or 2 or 3 => "審核中",
+            4 => "已確認",
+            0 => "草稿",
+            5 => "已隱藏",
+            _ => "未知狀態"
+        };
+    }
 }
 
-<h3>選擇性顯示</h3>
-<div>
-    @if (Model.MaxVersion > 0)
+
+
+
+
+<!--食譜標題-->
+<div class="container">
+
+    <ul class="responsive-table">
+        <li class="table-row">
+            <div class="col col-1 StatusNew" data-label="RecipeStateDescript" id="StatusNew">
+                <label class="btn-outline-success btn rounded-5 align-content-center fw-400" for="IAttr-1">
+                    <span>新上架</span>
+                </label>
+            </div>
+
+            <div class="col col-2" data-label="RecipeName">@Model.RecipeName</div>
+            <div class="col col-3" data-label="UserName">@Model.UserNickname</div>
+            <div class="col col-4" data-label="RecipeSteps">@* @Model.MaxRecipeField *@</div>
+            <div class="col col-5" data-label="ModificationDate">@Model.RecipeRecDate.ToString("yyyy-MM-dd")</div>
+        </li>
+    </ul>
+</div>
+
+
+<div class="container p-3">
+
+    <!-- 狀態欄樣式 -->    <!--按鈕最後一顆文字還沒辦法顯現-->
+    <div class="status-bar d-flex justify-content-around align-items-center py-3 mb-4 bg-light border rounded">
+
+        @if (Model.RecipeFieldsByVersion != null)
+        {
+            @foreach (var version in Model.RecipeFieldsByVersion)
+            {
+
+                var statusCode = Model.PrevVersions?
+                .FirstOrDefault(v => v.RecipeRecVersion == version.RecipeRecVersion)?.RecipeStatusCode ?? 0;
+
+                <div class="step text-center">
+                    <div class="circle rounded-circle d-flex justify-content-center align-items-center"
+                         style="width: 40px; height: 40px;
+                        @GetCircleBackgroundColor(statusCode, version.RecipeRecVersion == Model.MaxVersion)">
+                        @version.RecipeRecVersion
+                    </div>
+                    <div class="@GetTextColor(statusCode)">
+                        @GetStatusText(statusCode)
+                    </div>
+
+                </div>
+
+            }
+        }
+        else
+        {
+            <p>No versions available.</p>
+        }
+
+
+
+    </div>
+
+
+    @if (Model?.RecipeFieldsByVersion != null && Model.RecipeFieldsByVersion.Any())
     {
-        <p><strong>僅顯示最大版本內容</strong></p>
-        <p>版本號：@Model.MaxVersion</p>
+        <!-- 食譜審核欄位 -->
+        <div class="table-container">
+            @for (int i = Math.Max(0, Model.RecipeFieldsByVersion.Count() - 2); i < Model.RecipeFieldsByVersion.Count(); i++)
+            {
+                var versionGroup = Model.RecipeFieldsByVersion[i];
+
+                <!-- 左表格 -->
+                <div class="table-box">
+                    <div class="status-label mb-2">
+                        <h5 class="text-success">對照組</h5>
+                        <h6 colspan="5" style="background-color: #f8f8f8; font-weight: bold;">
+                            版本號: @versionGroup.RecipeRecVersion
+                        </h6>
+                    </div>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>&nbsp;</th>
+                                <th>項目</th>
+                                <th>照片</th>
+                                <th>內容</th>
+                                <th>修改留言</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 食譜審核表格內容 -->
+                            @foreach (var field in versionGroup.RecipeFields ?? new List<RecipeFieldDetail>())
+                            {
+                                <tr>
+                                    <td><input type="checkbox" @(field.FieldCheck ? "checked" : "")></td>
+                                    <td>@field.FieldName</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(field.FieldShot))
+                                        {
+                                            <img src="@field.FieldShot"
+                                                 style="width:100px;height:auto;"
+                                                 alt="RecipePhoto"
+                                                 onerror="this.src='/img/icon/EmptyPhoto.png';">
+                                        }
+                                        else
+                                        {
+                                            <img src="/img/icon/EmptyPhoto.png"
+                                                 style="width:100px;height:auto;"
+                                                 alt="RecipePhoto">
+                                        }
+                                    </td>
+                                    <td>@field.FieldDescript</td>
+                                    <td>
+                                        <textarea name="content" id="content">@field.FieldComment</textarea>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>無可用數據</p>
     }
 
-    @if (Model.PrevVersion > 0)
-    {
-        <p><strong>僅顯示前一版本內容</strong></p>
-        <p>版本號：@Model.PrevVersion</p>
-    }
+
 </div>
+<div class="d-flex justify-content-end gap-2 p-3 m-2">
+    <label id="return" class="btn btn-secondary" onclick="window.location.href='/RecipeBriefs/Recipe';">
+        <span>返回</span>
+    </label>
+    <!--還沒寫下面兩按鈕功能-->
+    <label id="fail" class="btn btn-warning" onclick="window.location.href='/RecipeBriefs/Recipe';">
+        <span>請修改</span>
+    </label>
+    <label id="approved" class="btn btn-success" onclick="window.location.href='/RecipeBriefs/Recipe';">
+        <span>審核通過</span>
+    </label>
+</div>
+
+
+
+<script>
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const row = this.closest('tr'); // 找到最近的 <tr>
+            if (this.checked) {
+                row.classList.add('selected-row'); // 加入自訂樣式
+            } else {
+                row.classList.remove('selected-row'); // 移除自訂樣式
+            }
+        });
+    });
+
+
+
+
+</script>
