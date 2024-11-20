@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace yum_admin.Models;
 
 public partial class UserSecretInfo
 {
+    [Display(Name = "ID")]
     public int UserId { get; set; }
 
+    [Display(Name = "Name")]
     public string? UserNickname { get; set; }
 
     public string Email { get; set; } = null!;
