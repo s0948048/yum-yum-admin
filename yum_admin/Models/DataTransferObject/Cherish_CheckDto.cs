@@ -2,6 +2,8 @@
 {
     public class Cherish_CheckDto
     {
+        public int CherishId { get; set; }
+
         public string? IngredAttributeName { get; set; }
 
         public string? IngredientName { get; set; }

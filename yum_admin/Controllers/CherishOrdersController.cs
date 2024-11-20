@@ -136,6 +136,7 @@ namespace yum_admin.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
 
+            // 這裡是面交時間
             var timeSpan = await (from d in _context.CherishTradeTimes
                                   where d.CherishId == id
                                   select d).ToListAsync();
@@ -147,11 +148,17 @@ namespace yum_admin.Controllers
             ViewBag.Fri = timeSpan.Where(d => d.TradeTimeCode.Contains("Fri"));
             ViewBag.Sat = timeSpan.Where(d => d.TradeTimeCode.Contains("Sat"));
             ViewBag.Sun = timeSpan.Where(d => d.TradeTimeCode.Contains("Sun"));
-			
+
+
+            // 這裡是reasonText
+            ViewBag.Reason = new SelectList(_context.CherishCheckReasons.Where(r => r.ReasonId != 4 && r.ReasonId != 5), "ReasonId", "ReasonText");
+
+
 			var orderDetail = await (from c in _context.CherishOrders
                               where c.CherishId == id
                               select new Cherish_CheckDto
                               {
+                                  CherishId = c.CherishId,
                                   IngredAttributeName = c.IngredAttribute.IngredAttributeName,
                                   IngredientName = c.Ingredient.IngredientName,
                                   Quantity = c.Quantity,
