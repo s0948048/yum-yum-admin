@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
 using yum_admin.Models;
 using yum_admin.Models.DataTransferObject;
@@ -46,6 +47,8 @@ namespace yum_admin.Controllers
             return View(await cherishOrders.ToListAsync());
         }
 
+        
+        
         // GET: CherishOrders
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -80,6 +83,8 @@ namespace yum_admin.Controllers
         }
 
 
+        
+        
         // GET: CherishOrders/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -102,6 +107,8 @@ namespace yum_admin.Controllers
             return View(cherishOrder);
         }
 
+        
+        
         // GET: CherishOrders/Create
         public IActionResult Create()
         {
@@ -132,6 +139,8 @@ namespace yum_admin.Controllers
             return View(cherishOrder);
         }
 
+        
+        
         // GET: CherishOrders/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -187,6 +196,8 @@ namespace yum_admin.Controllers
             return View(orderDetail);
         }
 
+        
+        
         // POST: CherishOrders/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -226,6 +237,8 @@ namespace yum_admin.Controllers
             return View(cherishOrder);
         }
 
+        
+        
         // GET: CherishOrders/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -248,6 +261,8 @@ namespace yum_admin.Controllers
             return View(cherishOrder);
         }
 
+       
+        
         // POST: CherishOrders/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -263,7 +278,57 @@ namespace yum_admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CherishOrderExists(int id)
+
+		// POST：CherishOrders/EditStatus
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> EditStatus([FromBody] OrderStatus o)
+        {
+            Console.WriteLine($"{o.orderId}；{o.reasonId}；{o.rejectText}；{o.stateCode}");
+            List<byte> accessStatus = [0, 1, 2, 3, 4, 5];
+            List<byte> accessReeason = [1, 2, 3, 4, 5];
+            if(o.orderId == 99)
+            {
+				return new BadRequestObjectResult(new { success = false, message = "請傳入訂單編號" });
+			}
+			if (!accessStatus.Contains(o.stateCode))
+            {
+                return new BadRequestObjectResult(new { success = false, message = "錯誤的狀態值" });
+            }
+			if ((o.stateCode == 0 || o.stateCode == 2) && (o.rejectText is not null || (o.reasonId != 99)))
+			{
+				return new BadRequestObjectResult(new { success = false, message = "傳遞包含其他訊息" });
+			}
+			if (o.stateCode == 3 && (o.rejectText is null || o.reasonId != 4)) 
+			{
+				return new BadRequestObjectResult(new { success = false, message = "請留言退回原因" });
+			}
+			if (o.stateCode == 1 && o.stateCode == 5)
+			{
+				return new BadRequestObjectResult(new { success = false, message = "請選擇正確狀態" });
+			}
+
+
+            switch (o.stateCode)
+            {
+                case 1:
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+			return Ok(new { message="OK"});
+        }
+
+		private bool CherishOrderExists(int id)
         {
             return _context.CherishOrders.Any(e => e.CherishId == id);
         }
@@ -274,5 +339,23 @@ namespace yum_admin.Controllers
             var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
             return Ok(new { token = tokens.RequestToken });
         }
-    }
+
+		//[HttpGet]
+		//public async Task< IActionResult > test(int id)
+		//{
+            
+
+  //          var orderSelect = await _context.CherishOrders.Where(o => o.CherishId == id).FirstAsync();
+
+
+  //          orderSelect.CherishOrderCheck = await _context.CherishOrderChecks.Where(o => o.CherishId == 6).FirstAsync();
+
+  //          orderSelect.CherishOrderCheck!.CherishPhoto = "/img/cherish/6.jpg";
+
+  //          await _context.SaveChangesAsync();
+
+  //          return RedirectToAction("cherish");
+		//}
+
+	}
 }

@@ -7,7 +7,7 @@
 }
 <link href="~/css/Cherish/edit.css?@date" rel="stylesheet" />
 <div class="mx-auto mt-4" style="width:1120px">
-    <input id="orderID" value="@c.CherishId" />
+    <input id="orderID" value="@c.CherishId" hidden/>
 
     @* 	<h5 class="ps-5">詳細資訊</h5> *@
 
@@ -252,7 +252,7 @@
 
 
     @* 按鈕區域 *@
-    <div class="text-end pe-5 mt-5">
+    <div class="text-end pe-5 mt-5 mb-5">
         @{
             if (c.TradeStateCode != 3 && c.TradeStateCode != 5)
             {
@@ -277,8 +277,10 @@
             退回原因
         </p>
         <textarea class="w-100 mt-1" placeholder="請輸入退回原因" style="height:10rem;"></textarea>
-        <button class="mt-3" id="back-popup-close">返回</button>
-        <button id="back-popup-confirm">確認</button>
+        <div class="my-3"></div>
+        <button class="btn btn-secondary col-3" id="back-popup-close">返回</button>
+        <button class="ms-3 btn btn-danger col-3" id="back-popup-confirm">確認</button>
+        <div class="mb-3"></div>
     </div>
 
     <!-- PopUp-edit -->

@@ -1,4 +1,6 @@
-﻿namespace yum_admin.Models.DataTransferObject
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace yum_admin.Models.DataTransferObject
 {
     public class Cherish_CheckDto
     {
@@ -20,7 +22,7 @@
 
         public DateOnly? CherishValidDate { get; set; }
 
-
+        [FromForm(Name ="Code")]
         public byte TradeStateCode { get; set; }
 
         public string? TradeStateDescript { get; set; }

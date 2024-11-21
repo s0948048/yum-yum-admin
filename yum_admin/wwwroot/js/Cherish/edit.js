@@ -1,6 +1,21 @@
 ﻿console.log(123)
+// token
+var token = null;
+fetch('/cherishorders/gettoken')
+    .then(response => response.json())
+    .then(response => {
+        token = response.token;
+    })
+
+ResetAJAX();
 
 // ---------【Global】----------------
+
+var orderId;
+var stateCode;
+var rejectText;
+var reasonId;
+
 function downPopUp(jq_popup) {
     jq_popup.parent().hide()
 }
@@ -10,8 +25,22 @@ function AllTextReset(jq_popup) {
 function AllSelectReset(jq_popup) {
     jq_popup.parent().find('select').val('0')
 }
-
+function ResetAJAX() {
+    orderId = 0;
+    stateCode = 99;
+    rejectText = null;
+    reasonId = 99;
+}
 // -----------------------------------
+
+
+/*
+orderId
+stateCode
+reasonId
+rejectText
+*/ 
+
 
 
 // 退回彈出視窗
@@ -19,7 +48,33 @@ $('#order-back').on('click', function () {
     $('#back-popup').show()
 })
 $('#back-popup-confirm').on('click', function () {
-    console.log($('#back-popup').find('textarea').val())
+
+    var orderId = Number($('#orderID').val());
+    var stateCode = 3;
+    var rejectText = $('#back-popup').find('textarea').val();
+    var reasonId = 4;
+
+    $.ajax({
+        url: '/cherishorders/EditStatus/',
+        method:'POST',
+        contentType: 'application/json',
+        headers: { 'RequestVerificationToken': token }, // 添加防護令牌
+        data: JSON.stringify({ 
+            orderId: orderId, 
+            stateCode: stateCode, 
+            rejectText: rejectText, 
+            reasonId: reasonId
+        }),
+        success: function (xhr) {
+            alert(`執行成功：${xhr.message}`)
+            ResetAJAX();
+        },
+        error: function (response) {
+            alert(`執行失敗：${response.responseJSON.message}`)
+            // console.log(`執行失敗：${response.responseJSON.message}`)
+            ResetAJAX();
+        }
+    })
     downPopUp($(this))
     AllTextReset($(this))
 })

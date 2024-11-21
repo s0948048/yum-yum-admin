@@ -119,7 +119,7 @@ namespace yum_admin.Controllers
 					IngredientIcon = i.icon
 				};
 
-				_context.Add(ingredient);
+				
 				await _context.SaveChangesAsync();
 				return RedirectToAction("Index");
 			}
