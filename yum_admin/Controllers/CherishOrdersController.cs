@@ -291,11 +291,15 @@ namespace yum_admin.Controllers
             {
 				return new BadRequestObjectResult(new { success = false, message = "請傳入訂單編號" });
 			}
-			if (!accessStatus.Contains(o.stateCode))
+            if (o.stateCode == 1 || o.stateCode == 5 || o.stateCode == 0)
+            {
+                return new BadRequestObjectResult(new { success = false, message = "請選擇正確狀態" });
+            }
+            if (!accessStatus.Contains(o.stateCode))
             {
                 return new BadRequestObjectResult(new { success = false, message = "錯誤的狀態值" });
             }
-			if ((o.stateCode == 0 || o.stateCode == 2) && (o.rejectText is not null || (o.reasonId != 99)))
+			if ((o.stateCode == 2) && (o.rejectText is not null || (o.reasonId is not null)))
 			{
 				return new BadRequestObjectResult(new { success = false, message = "傳遞包含其他訊息" });
 			}
@@ -303,29 +307,42 @@ namespace yum_admin.Controllers
 			{
 				return new BadRequestObjectResult(new { success = false, message = "請留言退回原因" });
 			}
-			if (o.stateCode == 1 && o.stateCode == 5)
-			{
-				return new BadRequestObjectResult(new { success = false, message = "請選擇正確狀態" });
-			}
+
+            //         order.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order.CherishId).First();
 
 
+            
             switch (o.stateCode)
             {
-                case 1:
-
+                case (byte)2:
+                    var order2 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
+                    order2.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order2.CherishId).First();
+                    order2.TradeStateCode = o.stateCode;
+                    order2.CherishOrderCheck.ReasonId = null;
+                    order2.CherishOrderCheck.RejectText = null;
+                    await _context.SaveChangesAsync();
+                    break;
+                case (byte)3:
+                    var order3 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
+                    order3.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order3.CherishId).First();
+                    order3.TradeStateCode = o.stateCode;
+                    order3.CherishOrderCheck.ReasonId = o.reasonId;
+                    order3.CherishOrderCheck.RejectText = o.rejectText;
+                    await _context.SaveChangesAsync();
+                    break;
+                case (byte)4:
+                    var order4 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
+                    order4.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order4.CherishId).First();
+                    order4.TradeStateCode = o.stateCode;
+                    order4.CherishOrderCheck.ReasonId = o.reasonId;
+                    order4.CherishOrderCheck.RejectText = null;
+                    await _context.SaveChangesAsync();
+                    break;
+                default:
+                    return new BadRequestObjectResult(new { seccess = false, message = "發生錯誤狀態" });
             }
 
-
-
-
-
-
-
-
-
-
-
-			return Ok(new { message="OK"});
+			return Ok(new { redirectUrl = Url.Action("cherish"), message ="已修改訂單"});
         }
 
 		private bool CherishOrderExists(int id)

@@ -37,7 +37,10 @@
             備註：@((c.ReasonText is not null ? c.ReasonText : (c.RejectText is not null ? c.RejectText : text)))
 
         </h4>
+        @*
         <h5 class="d-inline-block position-absolute end-0 pe-5 pt-1">預定上架日期：@(c.ReserveDate is not null ? ((DateTime)c.ReserveDate!).ToString("yyyy-MM-ss HH:mm") : "無備註")</h5>
+        *@
+
     </div>
 
     @* 第三個表頭區塊  切左右 *@
@@ -288,7 +291,7 @@
         <p class="mb-0 text-center fs-4">
             需要修改的因素
         </p>
-        <select class="rounded-1 col-8 mt-4" asp-items="@ViewBag.Reason">
+        <select class="rounded-1 col-8 mt-4" id="reasonSelect" asp-items="@ViewBag.Reason">
             <option value="0">---請選擇原因---</option>
         </select>
         <div class="my-4"></div>

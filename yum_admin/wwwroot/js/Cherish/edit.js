@@ -65,9 +65,10 @@ $('#back-popup-confirm').on('click', function () {
             rejectText: rejectText, 
             reasonId: reasonId
         }),
-        success: function (xhr) {
-            alert(`執行成功：${xhr.message}`)
+        success: function (response) {
+            alert(`執行成功：${response.message}`)
             ResetAJAX();
+            window.location.href = response.redirectUrl;
         },
         error: function (response) {
             alert(`執行失敗：${response.responseJSON.message}`)
@@ -90,6 +91,33 @@ $('#order-ok').on('click', function () {
     $('#ok-popup').show()
 })
 $('#ok-popup-confirm').on('click', function () {
+    var orderId = Number($('#orderID').val());
+    var stateCode = 2;
+    var rejectText = null;
+    var reasonId = null;
+
+    $.ajax({
+        url: '/cherishorders/EditStatus/',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: { 'RequestVerificationToken': token }, // 添加防護令牌
+        data: JSON.stringify({
+            orderId: orderId,
+            stateCode: stateCode,
+            rejectText: rejectText,
+            reasonId: reasonId
+        }),
+        success: function (response) {
+            alert(`執行成功：${response.message}`)
+            ResetAJAX();
+            window.location.href = response.redirectUrl;
+        },
+        error: function (response) {
+            alert(`執行失敗：${response.responseJSON.message}`)
+            // console.log(`執行失敗：${response.responseJSON.message}`)
+            ResetAJAX();
+        }
+    })
     downPopUp($(this))
 })
 $('#ok-popup-close').on('click', function () {
@@ -102,6 +130,33 @@ $('#order-edit').on('click', function () {
     $('#edit-popup').show()
 })
 $('#edit-popup-confirm').on('click', function () {
+    var orderId = Number($('#orderID').val());
+    var stateCode = 4;
+    var rejectText = null;
+    var reasonId = Number($('#reasonSelect').val());
+
+    $.ajax({
+        url: '/cherishorders/EditStatus/',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: { 'RequestVerificationToken': token }, // 添加防護令牌
+        data: JSON.stringify({
+            orderId: orderId,
+            stateCode: stateCode,
+            rejectText: rejectText,
+            reasonId: reasonId
+        }),
+        success: function (response) {
+            alert(`執行成功：${response.message}`)
+            ResetAJAX();
+            window.location.href = response.redirectUrl;
+        },
+        error: function (response) {
+            alert(`執行失敗：${response.responseJSON.message}`)
+            // console.log(`執行失敗：${response.responseJSON.message}`)
+            ResetAJAX();
+        }
+    })
     downPopUp($(this))
     AllSelectReset($(this))
 })
