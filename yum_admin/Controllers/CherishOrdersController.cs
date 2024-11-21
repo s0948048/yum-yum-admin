@@ -345,7 +345,32 @@ namespace yum_admin.Controllers
 			return Ok(new { redirectUrl = Url.Action("cherish"), message ="已修改訂單"});
         }
 
-		private bool CherishOrderExists(int id)
+        // POST：CherishOrders/EditStatus
+        [HttpPost]
+        public IActionResult ValidDate(DateOnly? date,int cherishId)
+        {
+            if(cherishId == 0)
+            {
+                return new BadRequestObjectResult(new { success = false, message = "請傳入正確訂單編號！" });
+            }
+            if(date is null || date <= DateOnly.FromDateTime(DateTime.Now))
+            {
+                return new BadRequestObjectResult(new { success = false, message = "請傳入正確日期或者已臨近期限！" });
+            }
+            var o = _context.CherishOrders.Where(c => c.CherishId == cherishId).First();
+            o.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == o.CherishId).First();
+
+            o.CherishOrderCheck.CherishValidDate = date;
+            _context.SaveChanges();
+
+            return Ok(new { message = "設置成功" });
+        }
+
+
+
+
+
+        private bool CherishOrderExists(int id)
         {
             return _context.CherishOrders.Any(e => e.CherishId == id);
         }

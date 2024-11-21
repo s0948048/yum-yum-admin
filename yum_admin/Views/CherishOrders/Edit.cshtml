@@ -7,7 +7,7 @@
 }
 <link href="~/css/Cherish/edit.css?@date" rel="stylesheet" />
 <div class="mx-auto mt-4" style="width:1120px">
-    <input id="orderID" value="@c.CherishId" hidden/>
+    <input id="orderID" value="@c.CherishId" hidden />
 
     @* 	<h5 class="ps-5">詳細資訊</h5> *@
 
@@ -62,14 +62,29 @@
             </div>
 
             <!-- 食材來源 -->
-            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block">購買來源：</p>@c.ObtainSource</div>
-            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block">購買日期：</p>@((c.ObtainDate).ToString("yyyy-MM-dd"))</div>
-            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block" style="letter-spacing:0.37rem;">截止日：</p>@c.EndDate.ToString("yyyy-MM-dd")</div>
+            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block">購買來源：</p> @c.ObtainSource</div>
+            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block">購買日期：</p> @((c.ObtainDate).ToString("yyyy-MM-dd"))</div>
+            <div class="px-5 my-0 w-100"><p class="col-3 m-0 d-inline-block" style="letter-spacing:0.37rem;">截止日：</p> @c.EndDate.ToString("yyyy-MM-dd")</div>
 
             <!-- 有效期限設置 -->
             <div class="px-5 my-0 w-100">
-                <p class="col-3 m-0 d-inline-block">有效期限：</p><input type="date" value="@(c.CherishValidDate is null? DateTime.Now.AddDays(3).ToString("yyyy-MM-dd"):((DateOnly)c.CherishValidDate!).ToString("yyyy-MM-dd"))" />
-                <p class="text-danger">@(c.CherishValidDate is null ? "未設置（預設3天後，請管理員設置）" : "已設置")</p>
+                <p class="col-3 m-0 d-inline-block">有效期限：</p>
+                @{
+                    if (c.CherishValidDate is null)
+                    {
+                        <label class=" btn btn-secondary" for="ifhasValid" id="validSet">設置</label>
+                        <span id="validShow" style="display:none;">
+                            <input class="ms-2" type="date" id="ValidDate" />
+                            <button class="ms-2 btn btn-secondary" id="ValidSummit">確認</button>
+                            <button class="ms-2 btn btn-secondary" id="ValidClose">關閉</button>
+                        </span>
+                    }
+                    else 
+                    {
+                        <span>@Html.Raw(((DateOnly)c.CherishValidDate).ToString("yyyy-MM-dd").Trim())</span>
+                    }
+                }
+                <p class="text-danger ms-1 p-0">@(c.CherishValidDate is null ? "(未設置)" : "(已設置)")</p>
             </div>
 
         </div>
@@ -261,7 +276,7 @@
             {
                 <button id="order-back" class="me-5 col-1 btn btn-danger">退回</button>
             }
-            if (c.TradeStateCode == 0 || c.TradeStateCode ==1 || c.TradeStateCode == 2)
+            if (c.TradeStateCode == 0 || c.TradeStateCode == 1 || c.TradeStateCode == 2)
             {
                 <button id="order-edit" class="me-5 col-1 btn btn-warning">請修改</button>
             }

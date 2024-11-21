@@ -164,3 +164,35 @@ $('#edit-popup-close').on('click', function () {
     downPopUp($(this))
     AllSelectReset($(this))
 })
+
+
+
+
+$('#validSet').on('click', function () {
+    $(this).hide();
+    $('#validShow').show();
+})
+$('#ValidClose').on('click', function () {
+    $('#validShow').hide();
+    $('#validSet').show();
+})
+$('#ValidSummit').on('click', function () {
+
+    var date = $('#ValidDate').val();
+    var cherishId = Number($('#orderID').val());
+    $.ajax({
+        url: '/cherishorders/validDate',
+        method: 'POST',
+        data: { date: date, cherishId: cherishId },
+        success: function (xhr) {
+            alert(xhr.message);
+            location.reload();
+        },
+        error: function (xhr) {
+            alert(xhr.responseJSON.message);
+        }
+    })
+
+    $('#validShow').hide();
+    $('#validSet').show();
+})
