@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using yum_admin.Models;
+using yum_admin.Models.DataTransferObject;
 using yum_admin.Models.ViewModels;
 
 namespace yum_admin.Controllers
@@ -166,154 +167,166 @@ namespace yum_admin.Controllers
         {
             return _context.RecipeBriefs.Any(e => e.RecipeId == id);
         }
-        public IActionResult Recipe()
-        {
-            // Step 1: 查詢最新的 RecipeRecords 和 RecipeRecordFields，並保持在資料庫內
-            var latestRecipeRecords = _context.RecipeRecords
-                .GroupBy(r => r.RecipeId)
-                .Select(g => new
-                {
-                    RecipeId = g.Key,
-                    LatestRecDate = g.Max(r => r.RecipeRecDate) // 取最大日期/最新日期
-                });
+		public IActionResult Recipe()
+		{
+			// Step 1: 查詢最新的 RecipeRecords 和 RecipeRecordFields，並保持在資料庫內
+			var latestRecipeRecords = _context.RecipeRecords
+				.GroupBy(r => r.RecipeId)
+				.Select(g => new
+				{
+					RecipeId = g.Key,
+					LatestRecDate = g.Max(r => r.RecipeRecDate) // 取最大日期/最新日期
+				});
 
-            var latestRecipeFields = _context.RecipeRecordFields
-                .GroupBy(rf => rf.RecipeId)
-                .Select(g => new
-                {
-                    RecipeId = g.Key,
-                    LatestField = g.Max(rf => rf.RecipeField) // 取最大欄位
-                });
+			var latestRecipeFields = _context.RecipeRecordFields
+				.GroupBy(rf => rf.RecipeId)
+				.Select(g => new
+				{
+					RecipeId = g.Key,
+					LatestField = g.Max(rf => rf.RecipeField) // 取最大欄位
+				});
 
-            // Step 2: 查詢所有需要的數據
-            var recipesQuery = from brief in _context.RecipeBriefs
-                               join record in _context.RecipeRecords
-                                   on brief.RecipeId equals record.RecipeId
-                               join field in _context.RecipeRecordFields
-                                   on brief.RecipeId equals field.RecipeId
-                               join state in _context.RecipeStates
-                                   on record.RecipeStatusCode equals state.RecipeStateCode
-                               join userInfo in _context.UserSecretInfos
-                                   on brief.CreatorId equals userInfo.UserId
-                               join latestRecord in latestRecipeRecords
-                                   on new { RecipeId = brief.RecipeId, RecipeRecDate = record.RecipeRecDate }
-                                      equals new { RecipeId = latestRecord.RecipeId, RecipeRecDate = latestRecord.LatestRecDate }
-                               join latestField in latestRecipeFields
-                                   on new { RecipeId = brief.RecipeId, RecipeField = field.RecipeField }
-                                      equals new { RecipeId = latestField.RecipeId, RecipeField = latestField.LatestField }
-                               select new RecipeViewModel
-                               {
-                                   RecipeStateDescription = state.RecipeStateDescript,
-                                   RecipeStateCode = state.RecipeStateCode,
-                                   RecipeName = brief.RecipeName,
-                                   RecipeId = brief.RecipeId,
-                                   UserNickname = userInfo.UserNickname,
-                                   RecipeField = field.RecipeField,
-                                   RecipeRecDate = record.RecipeRecDate.ToDateTime(TimeOnly.MinValue)
-                               };
+			// Step 2: 查詢所有需要的數據
+			var recipesQuery = from brief in _context.RecipeBriefs
+							   join record in _context.RecipeRecords
+								   on brief.RecipeId equals record.RecipeId
+							   join field in _context.RecipeRecordFields
+								   on brief.RecipeId equals field.RecipeId
+							   join state in _context.RecipeStates
+								   on record.RecipeStatusCode equals state.RecipeStateCode
+							   join userInfo in _context.UserSecretInfos
+								   on brief.CreatorId equals userInfo.UserId
+							   join latestRecord in latestRecipeRecords
+								   on new { RecipeId = brief.RecipeId, RecipeRecDate = record.RecipeRecDate }
+									  equals new { RecipeId = latestRecord.RecipeId, RecipeRecDate = latestRecord.LatestRecDate }
+							   join latestField in latestRecipeFields
+								   on new { RecipeId = brief.RecipeId, RecipeField = field.RecipeField }
+									  equals new { RecipeId = latestField.RecipeId, RecipeField = latestField.LatestField }
+							   select new RecipeViewModel
+							   {
+								   RecipeStateDescription = state.RecipeStateDescript,
+								   RecipeStateCode = state.RecipeStateCode,
+								   RecipeName = brief.RecipeName,
+								   RecipeId = brief.RecipeId,
+								   UserNickname = userInfo.UserNickname,
+								   RecipeField = field.RecipeField,
+								   RecipeRecDate = record.RecipeRecDate.ToDateTime(TimeOnly.MinValue)
+							   };
 
-            // Step 3: 加載查詢結果到內存
-            var recipes = recipesQuery.ToList();
+			// Step 3: 加載查詢結果到內存
+			var recipes = recipesQuery.ToList();
 
-            return View(recipes);
-        }
-        public async Task<IActionResult> RecipeDetail(int recipeId)
-        {
+			return View(recipes);
+		}
+
+		public async Task<IActionResult> RecipeDetail(int recipeId)
+		{
+			// 查詢 RecipeBrief
+			var recipeBrief = await _context.RecipeBriefs
+				.Where(b => b.RecipeId == recipeId)
+				.Select(b => new
+				{
+					b.RecipeName
+				}).FirstOrDefaultAsync();
+
+			if (recipeBrief == null)
+			{
+				return NotFound();
+			}
+
+			// 查詢 RecipeRecords（版本資料）
+			var recipeVersions = await _context.RecipeRecords
+				.Where(r => r.RecipeId == recipeId)
+				.OrderByDescending(r => r.RecipeRecVersion)
+				.Select(r => new RecipeVersionDetail
+				{
+					RecipeRecVersion = r.RecipeRecVersion,
+					RecipeStatusCode = r.RecipeStatusCode,
+					RecipeRecDate = r.RecipeRecDate.ToDateTime(TimeOnly.MinValue)
+				}).ToListAsync();
+
+			if (!recipeVersions.Any())
+			{
+				return NotFound();
+			}
+
+			// 查詢 RecipeFields 與 RecipeField，按版本分組，並與 RecipeRecords 匹配
+			var recipeFieldsByVersion = await _context.RecipeRecordFields
+				.Where(rf => rf.RecipeId == recipeId)
+				.GroupBy(rf => rf.RecipeRecVersion)
+				.Select(g => new RecipeFieldGroupedByVersion
+				{
+					RecipeRecVersion = g.Key,
+					RecipeFields = g.Select(f => new RecipeFieldDetail
+					{
+						FieldShot = f.FieldShot,
+						FieldDescript = f.FieldDescript,
+						FieldCheck = f.FieldCheck,
+						FieldComment = f.FieldComment,
+						FieldName = _context.RecipeFields
+							.Where(field => field.FieldId == f.RecipeField)
+							.Select(field => field.FieldName).FirstOrDefault() ?? "Default Field Name"
+					}).ToList()
+				}).ToListAsync();
+
+			// 確保每個版本的狀態碼從 RecipeRecords 對應到 RecipeFieldsByVersion
+			foreach (var fieldGroup in recipeFieldsByVersion)
+			{
+				var matchingVersion = recipeVersions.FirstOrDefault(v => v.RecipeRecVersion == fieldGroup.RecipeRecVersion);
+				if (matchingVersion != null)
+				{
+					fieldGroup.RecipeStatusCode = matchingVersion.RecipeStatusCode;
+				}
+			}
+
+			// 組裝 ViewModel
+			var viewModel = new RecipeDetailViewModel
+			{
+				RecipeId = recipeId,
+				RecipeName = recipeBrief?.RecipeName ?? "Unknown Recipe",
+				MaxVersion = recipeVersions.Max(r => r.RecipeRecVersion),
+				PrevVersions = recipeVersions,
+				RecipeFieldsByVersion = recipeFieldsByVersion ?? new List<RecipeFieldGroupedByVersion>(),
+				RecipeRecDate = recipeVersions.FirstOrDefault()?.RecipeRecDate ?? DateTime.MinValue
+			};
+
+			return View(viewModel);
+		}
 
 
 
-            // 查詢 RecipeBrief
-            var recipeBrief = await _context.RecipeBriefs
-                .Where(b => b.RecipeId == recipeId)
-                .Select(b => new
-                {
-                    b.RecipeName
-                }).FirstOrDefaultAsync();
+		[Route("RecipeBriefs/Approved")]
+		[HttpPost]
+		public async Task<IActionResult> Approved(int recipeId, int recipeRecVersion)
+		{
+			Console.WriteLine($"Updating RecipeID: {recipeId}, RecipeRecVersion: {recipeRecVersion}");
+			try
+			{
+				var recipeUpload = await _context.RecipeRecords.FirstOrDefaultAsync(
+					r => r.RecipeId == recipeId && r.RecipeRecVersion == recipeRecVersion);
 
-            if (recipeBrief == null)
-            {
-                return NotFound();
-            }
+				if (recipeUpload == null)
+				{
+					Console.WriteLine("Record not found.");
+					return Json(new { success = false, message = "食譜記錄未找到。" });
+				}
 
-            // 查詢 RecipeRecords（版本資料）
-            var recipeVersions = await _context.RecipeRecords
-                .Where(r => r.RecipeId == recipeId)
-                .OrderByDescending(r => r.RecipeRecVersion)
-                .Select(r => new RecipeVersionDetail
-                {
-                    RecipeRecVersion = r.RecipeRecVersion,
-                    RecipeStatusCode = r.RecipeStatusCode,
-                    RecipeRecDate = r.RecipeRecDate.ToDateTime(TimeOnly.MinValue)
-                }).ToListAsync();
-
-
-            if (!recipeVersions.Any())
-            {
-                return NotFound();
-            }
-
-
-            // 從資料庫中查詢 recipeRecords
-            var recipeRecords = await _context.RecipeRecords
-                .Where(r => r.RecipeId == recipeId)
-                .OrderByDescending(r => r.RecipeRecVersion)
-                .Select(r => new RecipeVersionDetail
-                {
-                    RecipeRecVersion = r.RecipeRecVersion,
-                    RecipeStatusCode = r.RecipeStatusCode,
-                    RecipeRecDate = r.RecipeRecDate.ToDateTime(TimeOnly.MinValue)
-                }).ToListAsync();
-
-            // 分離最新版本與歷史版本
-            var maxVersionRecord = recipeVersions.FirstOrDefault();
-            var previousVersions = recipeVersions.Skip(1).ToList();
-
-
-            // 查詢 RecipeFields 與 RecipeField，按版本分組
-            var recipeFieldsByVersion = await _context.RecipeRecordFields
-                .Where(rf => rf.RecipeId == recipeId)
-                .GroupBy(rf => rf.RecipeRecVersion)
-                .Select(g => new RecipeFieldGroupedByVersion
-                {
-                    RecipeRecVersion = g.Key,
-                    RecipeFields = g.Select(f => new RecipeFieldDetail
-                    {
-                        FieldShot = f.FieldShot,
-                        FieldDescript = f.FieldDescript,
-                        FieldCheck = f.FieldCheck,
-                        FieldComment = f.FieldComment,
-                        FieldName = _context.RecipeFields
-                            .Where(field => field.FieldId == f.RecipeField)
-                            .Select(field => field.FieldName).FirstOrDefault() ?? "Default Field Name"
-                    }).ToList()
-                }).ToListAsync();
+				recipeUpload.RecipeStatusCode = 4;
+				await _context.SaveChangesAsync();
+				Console.WriteLine("Update successful.");
+				return Content("食譜已通過審核！", "text/plain", System.Text.Encoding.UTF8);
+				//return Json(new { success = true, message = "食譜已通過審核！" });
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error: {ex.Message}");
+				return Json(new { success = false, message = "發生錯誤，請稍後再試。" });
+			}
+		}
 
 
 
-
-            // 組裝 ViewModel
-            var viewModel = new RecipeDetailViewModel
-            {
-
-                RecipeId = recipeId,
-                RecipeName = recipeBrief?.RecipeName ?? "Unknown Recipe", // 防止空值
-                MaxVersion = recipeRecords.Max(r => r.RecipeRecVersion), // 使用 Max 獲取最大版本
-                PrevVersions = recipeVersions,
-                /*PrevVersions = recipeRecords ?? new List<RecipeVersionDetail>(),*/ // 防止空值
-                RecipeFieldsByVersion = recipeFieldsByVersion ?? new List<RecipeFieldGroupedByVersion>(),
-                RecipeRecDate = recipeRecords?.Any() == true // 檢查 recipeRecords 是否為空或 null
-                ? recipeRecords
-                    .OrderByDescending(r => r.RecipeRecVersion)
-                    .FirstOrDefault()?.RecipeRecDate ?? DateTime.MinValue // 如果不為空，執行邏輯
-                : DateTime.MinValue // 如果為空，返回默認日期
-                //MaxRecipeField = maxRecipeField
-            };
-
-            return View(viewModel);
-
-        }
-
-        public IActionResult RecipeInfo()
+		public IActionResult RecipeInfo()
         {
             return View();
         }

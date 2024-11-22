@@ -2,7 +2,7 @@
 @model yum_admin.Models.ViewModels.RecipeDetailViewModel
 
 <!--狀態欄最後一顆按鈕樣式-->
-@functions {
+@* @functions {
     private string GetCircleBackgroundColor(int statusCode, bool isMaxVersion)
     {
         if (isMaxVersion)
@@ -24,7 +24,7 @@
     {
         return statusCode switch
         {
-            4 => "text-warning",
+            4 => "text-secondary",
             1 or 2 or 3 => "text-muted",
             _ => "text-muted"
         };
@@ -40,6 +40,55 @@
             5 => "已隱藏",
             _ => "未知狀態"
         };
+    }
+} *@
+
+
+@functions {
+    private static readonly Dictionary<int, string> StatusBackgroundColors = new()
+    {
+        { 0, "background-color: #d3d3d3; color: #000;" }, // light
+        { 1, "background-color: #ffc107; color: #000;" }, // Warning
+        { 2, "background-color: #dc3545; color: #fff;" },  // Danger
+        { 3, "background-color: #ffc107; color: #000;" }, // Warning
+        { 4, "background-color: #6c757d; color: #fff;" }, // Secondary
+        { 5, "background-color: #dc3545; color: #fff;" }  // Danger
+    };
+
+    private static readonly Dictionary<int, string> StatusTextColors = new()
+    {
+        { 0, "text-muted" },      // 草稿
+        { 1, "text-muted" },      // 審核中
+        { 2, "text-danger" },      // 審核中
+        { 3, "text-muted" },      // 審核中
+        { 4, "text-secondary" },  // 已確認
+        { 5, "text-danger" }      // 已隱藏
+    };
+
+    private static readonly Dictionary<int, string> StatusTexts = new()
+    {
+        { 0, "草稿-不需審核" },
+        { 1, "審核中" },
+        { 2, "審核中" },
+        { 3, "審核中" },
+        { 4, "已確認" },
+        { 5, "已隱藏" }
+    };
+
+    private string GetCircleBackgroundColor(int statusCode)
+    {
+      
+        return StatusBackgroundColors.TryGetValue(statusCode, out var color) ? color : "background-color: #6c757d; color: #fff;"; // Default
+    }
+
+    private string GetTextColor(int statusCode)
+    {
+        return StatusTextColors.TryGetValue(statusCode, out var textColor) ? textColor : "text-muted"; // Default
+    }
+
+    private string GetStatusText(int statusCode)
+    {
+        return StatusTexts.TryGetValue(statusCode, out var text) ? text : "未知狀態"; // Default
     }
 }
 
@@ -60,7 +109,7 @@
 
             <div class="col col-2" data-label="RecipeName">@Model.RecipeName</div>
             <div class="col col-3" data-label="UserName">@Model.UserNickname</div>
-            <div class="col col-4" data-label="RecipeSteps">@* @Model.MaxRecipeField *@</div>
+            <div class="col col-4" data-label="RecipeSteps"></div>
             <div class="col col-5" data-label="ModificationDate">@Model.RecipeRecDate.ToString("yyyy-MM-dd")</div>
         </li>
     </ul>
@@ -69,38 +118,28 @@
 
 <div class="container p-3">
 
-    <!-- 狀態欄樣式 -->    <!--按鈕最後一顆文字還沒辦法顯現-->
+    <!-- 狀態欄樣式 -->
     <div class="status-bar d-flex justify-content-around align-items-center py-3 mb-4 bg-light border rounded">
-
         @if (Model.RecipeFieldsByVersion != null)
         {
             @foreach (var version in Model.RecipeFieldsByVersion)
             {
-
-                var statusCode = Model.PrevVersions?
-                .FirstOrDefault(v => v.RecipeRecVersion == version.RecipeRecVersion)?.RecipeStatusCode ?? 0;
-
-                <div class="step text-center">
+                 <div class="step text-center">
                     <div class="circle rounded-circle d-flex justify-content-center align-items-center"
                          style="width: 40px; height: 40px;
-                        @GetCircleBackgroundColor(statusCode, version.RecipeRecVersion == Model.MaxVersion)">
+                     @GetCircleBackgroundColor(version.RecipeStatusCode)">
                         @version.RecipeRecVersion
                     </div>
-                    <div class="@GetTextColor(statusCode)">
-                        @GetStatusText(statusCode)
+                    <div class="@GetTextColor(version.RecipeStatusCode)">
+                        @GetStatusText(version.RecipeStatusCode)
                     </div>
-
                 </div>
-
             }
         }
         else
         {
             <p>No versions available.</p>
         }
-
-
-
     </div>
 
 
@@ -157,7 +196,7 @@
                                         <textarea name="content" id="content">@field.FieldComment</textarea>
                                     </td>
                                 </tr>
-                            }
+                                 }
                         </tbody>
                     </table>
                 </div>
@@ -171,7 +210,9 @@
 
 
 </div>
+
 <div class="d-flex justify-content-end gap-2 p-3 m-2">
+            
     <label id="return" class="btn btn-secondary" onclick="window.location.href='/RecipeBriefs/Recipe';">
         <span>返回</span>
     </label>
@@ -179,26 +220,82 @@
     <label id="fail" class="btn btn-warning" onclick="window.location.href='/RecipeBriefs/Recipe';">
         <span>請修改</span>
     </label>
-    <label id="approved" class="btn btn-success" onclick="window.location.href='/RecipeBriefs/Recipe';">
-        <span>審核通過</span>
-    </label>
+    
+    <form method="post" action="/RecipeBriefs/Approved">
+        <!-- 傳遞每個食譜的 RecipeID MaxVersion-->
+        <input type="hidden" name="recipeId" value="@Model.RecipeId" />
+        <input type="hidden" name="recipeRecVersion" value="@Model.MaxVersion" />
+        <button type="submit" class="btn btn-success md-4" id="fetchDataBtn">
+            審核通過
+        </button>
+    </form>
+    
+</div>
+
+<!--點擊後彈跳視窗-->
+@* -- Toast 提示訊息 -- *@
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0"
+         role="alert" aria-live="assertive" aria-atomic="true"
+         data-bs-autohide="true" data-bs-delay="1500">
+        <div class="d-flex">
+            <div class="toast-body">
+                成功發布食譜！
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
 </div>
 
 
 
+
+
+@section Scripts {
 <script>
-    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-            const row = this.closest('tr'); // 找到最近的 <tr>
-            if (this.checked) {
-                row.classList.add('selected-row'); // 加入自訂樣式
-            } else {
-                row.classList.remove('selected-row'); // 移除自訂樣式
-            }
+        <script>
+
+            document.getElementById('openModal').addEventListener('click', function (event) {
+                event.preventDefault(); // 阻止表單的預設提交
+            const form = event.target.closest('form'); // 找到表單
+
+            // 使用 Fetch API 發送表單資料
+            fetch(form.action, {
+                method: form.method,
+            body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const toastEl = document.getElementById('successToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+
+            if (data.success) {
+                // 設置成功消息
+                toastBody.textContent = data.message;
+            toastEl.classList.remove('bg-danger');
+            toastEl.classList.add('bg-success');
+                } else {
+                // 設置錯誤消息
+                toastBody.textContent = data.message;
+            toastEl.classList.remove('bg-success');
+            toastEl.classList.add('bg-danger');
+                }
+
+            // 顯示 Toast
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+                // 在 Toast 隱藏後重新加載頁面
+                toastEl.addEventListener('hidden.bs.toast', () => {
+                window.location.reload();
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            alert("發生錯誤，請稍後再試！");
+            });
         });
-    });
-
-
 
 
 </script>
+}
