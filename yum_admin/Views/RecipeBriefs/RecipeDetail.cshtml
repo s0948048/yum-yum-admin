@@ -2,47 +2,6 @@
 @model yum_admin.Models.ViewModels.RecipeDetailViewModel
 
 <!--狀態欄最後一顆按鈕樣式-->
-@* @functions {
-    private string GetCircleBackgroundColor(int statusCode, bool isMaxVersion)
-    {
-        if (isMaxVersion)
-        {
-            return "background-color: #28a745; color: #fff;"; // Max Version 樣式
-        }
-
-        return statusCode switch
-        {
-            0 => "background-color: #d3d3d3; color: #000;", // light
-            1 or 2 or 3 => "background-color: #ffc107; color: #000;", // Warning
-            4 => "background-color: #6c757d; color: #fff;", // Secondary
-            5 => "background-color: #dc3545; color: #fff;", // Danger
-            _ => "background-color: #6c757d; color: #fff;" // Default
-        };
-    }
-
-    private string GetTextColor(int statusCode)
-    {
-        return statusCode switch
-        {
-            4 => "text-secondary",
-            1 or 2 or 3 => "text-muted",
-            _ => "text-muted"
-        };
-    }
-
-    private string GetStatusText(int statusCode)
-    {
-        return statusCode switch
-        {
-            1 or 2 or 3 => "審核中",
-            4 => "已確認",
-            0 => "草稿",
-            5 => "已隱藏",
-            _ => "未知狀態"
-        };
-    }
-} *@
-
 
 @functions {
     private static readonly Dictionary<int, string> StatusBackgroundColors = new()
@@ -91,8 +50,6 @@
         return StatusTexts.TryGetValue(statusCode, out var text) ? text : "未知狀態"; // Default
     }
 }
-
-
 
 
 
@@ -169,14 +126,21 @@
                                 <th>修改留言</th>
                             </tr>
                         </thead>
+
+
                         <tbody>
-                            <!-- 食譜審核表格內容 -->
+                            <!--食譜詳細資訊-->
                             @foreach (var field in versionGroup.RecipeFields ?? new List<RecipeFieldDetail>())
                             {
-                                <tr>
-                                    <td><input type="checkbox" @(field.FieldCheck ? "checked" : "")></td>
+                                
+                                <tr data-field-id="1">
+                                    
+                                    <td>
+                                        <input type="checkbox" name="fieldCheckbox" value="1">
+                                    </td>
                                     <td>@field.FieldName</td>
                                     <td>
+                                        <!-- 顯示圖片 -->
                                         @if (!string.IsNullOrEmpty(field.FieldShot))
                                         {
                                             <img src="@field.FieldShot"
@@ -192,12 +156,12 @@
                                         }
                                     </td>
                                     <td>@field.FieldDescript</td>
-                                    <td>
-                                        <textarea name="content" id="content">@field.FieldComment</textarea>
-                                    </td>
+                                    <td><textarea name="content" class="field-comment">@field.FieldComment</textarea></td>
+                                    
                                 </tr>
-                                 }
+                            }
                         </tbody>
+
                     </table>
                 </div>
             }
@@ -208,6 +172,12 @@
         <p>無可用數據</p>
     }
 
+    @* -- Toast 提示訊息 -- *@
+
+    <div id="toast" style="display:none; position:fixed; bottom:20px; right:20px; background:#333; color:#fff; padding:15px; border-radius:5px; z-index:9999;">
+        <span id="toast-message"></span>
+    </div>
+
 
 </div>
 
@@ -216,34 +186,28 @@
     <label id="return" class="btn btn-secondary" onclick="window.location.href='/RecipeBriefs/Recipe';">
         <span>返回</span>
     </label>
-    <!--還沒寫下面兩按鈕功能-->
-    <label id="fail" class="btn btn-warning" onclick="window.location.href='/RecipeBriefs/Recipe';">
+
+
+    <label id="fail" class="btn btn-warning">
         <span>請修改</span>
     </label>
-    
-    <form method="post" action="/RecipeBriefs/Approved">
-        <!-- 傳遞每個食譜的 RecipeID MaxVersion-->
-        <input type="hidden" name="recipeId" value="@Model.RecipeId" />
-        <input type="hidden" name="recipeRecVersion" value="@Model.MaxVersion" />
-        <button type="submit" class="btn btn-success md-4" id="fetchDataBtn">
+   
+
+    <button class="btn btn-success md-4" id="approveRecipeBtn">
             審核通過
         </button>
-    </form>
-    
+
 </div>
 
-<!--點擊後彈跳視窗-->
-@* -- Toast 提示訊息 -- *@
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="successToast" class="toast align-items-center text-white bg-success border-0"
-         role="alert" aria-live="assertive" aria-atomic="true"
-         data-bs-autohide="true" data-bs-delay="1500">
-        <div class="d-flex">
-            <div class="toast-body">
-                成功發布食譜！
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+
+<!-- Toast 組件 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toast-container" style="z-index: 9999;">
+    <div id="toast" class="toast" style="display:none;">
+        <div class="toast-header">
+            <strong class="me-auto">訊息</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
+        <div class="toast-body" id="toast-message"></div>
     </div>
 </div>
 
@@ -251,51 +215,142 @@
 
 
 
+
+
 @section Scripts {
+
 <script>
-        <script>
+$(document).ready(function () {
+    $("#approveRecipeBtn").click(function () {
+        var recipeId = @Model.RecipeId;  // 假設模型中有 RecipeId
+        var recipeRecVersion = @Model.MaxVersion;  // 假設模型中有 MaxVersion
 
-            document.getElementById('openModal').addEventListener('click', function (event) {
-                event.preventDefault(); // 阻止表單的預設提交
-            const form = event.target.closest('form'); // 找到表單
+        // 發送 AJAX 請求
+        $.ajax({
+            url: '/RecipeBriefs/Approved',
+            type: 'POST',
+            data: {
+                recipeId: recipeId,
+                recipeRecVersion: recipeRecVersion
+            },
+            success: function (response) {
+                // 根據返回的結果顯示 Alert 訊息
+                var alertMessage = response.message;
+                var success = response.success;
 
-            // 使用 Fetch API 發送表單資料
-            fetch(form.action, {
-                method: form.method,
-            body: new FormData(form)
-            })
-            .then(response => response.json())
-            .then(data => {
-                const toastEl = document.getElementById('successToast');
-            const toastBody = toastEl.querySelector('.toast-body');
+                showAlert(alertMessage, success);
+            },
+            error: function () {
+                showAlert("發生錯誤，請稍後再試！", false);
+            }
+        });
+    });
 
-            if (data.success) {
-                // 設置成功消息
-                toastBody.textContent = data.message;
-            toastEl.classList.remove('bg-danger');
-            toastEl.classList.add('bg-success');
-                } else {
-                // 設置錯誤消息
-                toastBody.textContent = data.message;
-            toastEl.classList.remove('bg-success');
-            toastEl.classList.add('bg-danger');
+    function showAlert(message, success) {
+        // 設定顯示訊息
+        if (success) {
+            alert("成功：" + message);
+        } else {
+            alert("錯誤：" + message);
+        }
+    }
+});
+
+
+
+
+
+
+
+
+        //CHECKBOX定位id
+        //請修改 儲存變更
+        //fail測試按鈕綁定
+        //------------
+        const updatedFields = [
+            { FieldId: 1, FieldComment: "請修改" }
+        ];
+
+        const data = {
+            recipeId: 1424,
+            recipeVersion: 1,
+            updatedFields: updatedFields
+        };
+
+        fetch('/RecipeBriefs/SaveChanges', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+  
+
+        document.getElementById("fail").addEventListener("click", async () => {
+            const recipeId = @Model.RecipeId; // 從 Model 中傳遞 recipeId
+            const recipeVersion = @Model.MaxVersion; // 從 Model 中傳遞 MaxVersion
+
+            console.log("RecipeId:", recipeId);
+            console.log("RecipeVersion:", recipeVersion);
+
+
+            console.log("RecipeId2: @Model.RecipeId");
+            console.log("RecipeVersion2: @Model.MaxVersion");
+
+            const updatedFields = [];
+
+            // 獲取所有勾選的欄位
+            document.querySelectorAll("input[name='fieldCheckbox']:checked").forEach((checkbox) => {
+                const row = checkbox.closest("tr");
+            if (row) {
+                    const fieldId = parseInt(row.getAttribute("data-field-id"));
+            const fieldComment = row.querySelector("textarea.field-comment").value;
+            updatedFields.push({
+                FieldId: fieldId,
+            FieldComment: fieldComment
+                    });
                 }
-
-            // 顯示 Toast
-            const toast = new bootstrap.Toast(toastEl);
-            toast.show();
-
-                // 在 Toast 隱藏後重新加載頁面
-                toastEl.addEventListener('hidden.bs.toast', () => {
-                window.location.reload();
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            alert("發生錯誤，請稍後再試！");
             });
+
+            console.log("Updated Fields:", updatedFields);
+
+            // 如果沒有變更，提示用戶
+            if (updatedFields.length === 0) {
+                alert("請至少選擇一個欄位進行修改！");
+            return;
+            }
+
+            // 發送保存請求
+            try {
+                const response = await fetch('/RecipeBriefs/SaveChanges', {
+                method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                    },
+            body: JSON.stringify({
+                recipeId,
+                recipeVersion,
+                updatedFields
+            })
+                });
+
+            const result = await response.json();
+            if (result.success) {
+                alert("食譜需修改 已送出！");
+            window.location.href = `/RecipeBriefs/RedirectToView?success=true&recipeId=${recipeId}`;
+                } else {
+                alert("儲存失敗：" + result.message);
+            window.location.href = `/RecipeBriefs/RedirectToView?success=false&recipeId=${recipeId}`;
+                }
+            } catch (error) {
+                console.error("儲存過程中發生錯誤", error);
+            alert("儲存失敗！");
+            }
         });
 
 
+
+
 </script>
+
 }

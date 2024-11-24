@@ -1,5 +1,6 @@
 ﻿body {
     font-family: 'lato', sans-serif;
+    overflow-x: hidden;
 }
 
 .container {
@@ -8,6 +9,7 @@
     margin-right: auto;
     padding-left: 10px;
     padding-right: 10px;
+    overflow-x: hidden;
 }
 
 h2 {
@@ -151,6 +153,12 @@ h2 {
 }
 
 
+#StatusDefault .status-label {
+    background-color: #b4b4b4;
+    /* 灰色 */
+}
+
+
 /* 變更按鈕svg樣式 */
 .btn-hover:hover svg path {
     fill: var(--bs-white);
@@ -188,3 +196,4 @@ h2 {
     fill: var(--bs-red);
     /* 預設顏色 */
 }
+

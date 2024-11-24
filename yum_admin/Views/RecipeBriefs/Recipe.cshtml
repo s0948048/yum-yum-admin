@@ -11,6 +11,22 @@
 
 
 <div class="container">
+    <div class="mt-5"></div>
+    <h1>食譜審查</h1>
+    <div class="mt-3 mb-2"></div>
+
+    <div class="w-100 px-3 mb-3 ms-2 d-flex align-items-center">
+        <div class="d-flex" style="flex-basis:55%;" id="status-sort">
+            <input class="me-1" type="radio" name="sort" value="99" id="all" /><label for="all" class="me-3">全部</label>
+            <input class="me-1" type="radio" name="sort" value="1" id="already" /><label for="new" class="me-3">新上架</label>
+            <input class="me-1" type="radio" name="sort" value="3" id="wait" /><label for="wait" class="me-3">待審核</label>
+            <input class="me-1" type="radio" name="sort" value="2" id="edit" /><label for="fail" class="me-3">退回請改</label>
+            <input class="me-1" type="radio" name="sort" value="4" id="retn" /><label for="approve" class="me-3">已確認</label>
+            <input class="me-1" type="radio" name="sort" value="0" id="edit" /><label for="draft" class="me-3">草稿</label>
+
+
+        </div>
+    </div>
 
     <!-- 表頭 -->
     <ul class="responsive-table">
@@ -27,11 +43,10 @@
         @foreach (var item in latestRecipes)
         {
 
-            <!-- 每一筆資料行  -->
-            <li class="table-row">
+            
 
                 <!-- 判斷狀態顯示 -->
-                @{
+
                     string idName = "";
                     string cssClass = "";
                     string Text = "";
@@ -75,7 +90,9 @@
                             Text = "未知狀態";
                             break;
                     }
-                }
+
+            <!-- 每一筆資料行  -->
+            <li class="table-row" data-state="@stateCode">
 
                 <div class="col col-1" data-label="RecipeStateDescript" id="@idName">
                     <div class="status-label @cssClass rounded-5 align-content-center fw-400">
@@ -96,16 +113,142 @@
                                   fill="#0d6efd" />
                         </svg>
                     </button>
-                    @* 食譜刪除按鈕 --還沒設定*@
-                    <button id="btn-delete"
-                            class="btn text-center justify-content-center lh-5 btn-hover btn-delete" onclick="window.location.href='@Url.Action("RecipeDetail", "RecipeBriefs", new { recipeId = item.RecipeId })';">
+                    @* 食譜刪除按鈕 *@
+                    @* <button id="btn-delete"
+                            class="btn text-center justify-content-center lh-5 btn-hover btn-delete"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal"
+                            data-recipeid="@item.RecipeId">
                         <svg class="" height="20px" viewBox="0 -960 960 960" width="20px" fill="none">
                             <path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z" />
                         </svg>
-                    </button>
+                    </button> *@
+
+                    
+
 
                 </div>
             </li>
         }
     </ul>
 </div>
+
+
+
+
+<!-- Toast -->
+@* <div class="toast-container position-fixed top-0 end-0 p-3" id="toast-container">
+    <div id="toast" class="toast" style="display:none;">
+        <div class="toast-header">
+            <strong class="me-auto">訊息</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message"></div>
+    </div>
+</div> *@
+
+
+
+<!-- CSRF 防護 -->
+
+<form method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+
+
+
+
+@section Scripts {
+
+    <script>
+        //state篩選
+        document.addEventListener("DOMContentLoaded", function () {
+            const radios = document.querySelectorAll('input[name="sort"]');
+            const rows = document.querySelectorAll('.table-row');
+
+            radios.forEach(radio => {
+                radio.addEventListener("change", function () {
+                    const selectedValue = this.value; // 取得選中的 radio button 的值
+
+                    rows.forEach(row => {
+                        const rowState = row.getAttribute("data-state");
+
+                        // 如果選中的值為 "99"（全部），或列的狀態值符合選中的值，顯示該列
+                        if (selectedValue === "99" || rowState === selectedValue) {
+                            row.style.display = ""; // 顯示
+                        } else {
+                            row.style.display = "none"; // 隱藏
+                        }
+                    });
+                });
+            });
+        });
+
+
+
+        //Approve -- window alert 提示顯現
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // 檢查 URL 的 Query String
+            const urlParams = new URLSearchParams(window.location.search);
+            const alertMessage = urlParams.get("toastMessage"); // 重用 Query String
+
+            if (alertMessage) {
+                showAlert(alertMessage); // 顯示 Alert
+            }
+        });
+
+        function showAlert(message) {
+            // 使用 window.alert() 顯示訊息
+            alert(message);
+
+            // 如果需要進一步邏輯，可以在這裡執行
+            console.log("Alert has been displayed with message:", message);
+        }
+
+        // //Approve -- Toast 提示顯現
+        // document.addEventListener("DOMContentLoaded", () => {
+        //     const toastElement = document.getElementById("toast");
+        //     console.log("Initial classes for toast:", toastElement.classList);
+        // });
+
+
+        // document.addEventListener("DOMContentLoaded", () => {
+        //     // 檢查 URL 的 Query String
+        //     const urlParams = new URLSearchParams(window.location.search);
+        //     const toastMessage = urlParams.get("toastMessage");
+        //     const success = urlParams.get("success");
+
+        //     if (toastMessage) {
+        //         showToast(toastMessage, success === 'true'); // 顯示 Toast
+        //     }
+        // });
+
+      
+        // function showToast(message, success) {
+        //     const toastElement = document.getElementById("toast");
+        //     const toastMessageElement = document.getElementById("toast-message");
+
+        //     // 設定訊息文字
+        //     toastMessageElement.textContent = message;
+
+        //     // 根據 success 參數設定背景顏色//這邊無法更改
+        //     // if (success) {
+        //     //     toastElement.classList.remove("bg-success");
+        //     //     toastElement.classList.add("bg-danger");
+        //     // } else {
+        //     //     toastElement.classList.remove("bg-danger");
+        //     //     toastElement.classList.add("bg-success");
+        //     // }
+
+        //     // 使用 Bootstrap 的 JavaScript API 顯示 Toast
+        //     const toast = new bootstrap.Toast(toastElement);
+        //     toast.show();
+        // }
+
+
+
+
+    </script>
+}
