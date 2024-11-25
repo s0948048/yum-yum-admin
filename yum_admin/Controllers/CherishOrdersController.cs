@@ -47,8 +47,6 @@ namespace yum_admin.Controllers
             return View(await cherishOrders.ToListAsync());
         }
 
-        
-        
         // GET: CherishOrders
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -382,22 +380,22 @@ namespace yum_admin.Controllers
             return Ok(new { token = tokens.RequestToken });
         }
 
-		//[HttpGet]
-		//public async Task< IActionResult > test(int id)
-		//{
-            
-
-  //          var orderSelect = await _context.CherishOrders.Where(o => o.CherishId == id).FirstAsync();
+//[HttpGet]
+//public async Task<IActionResult> test(int id)
+//{
 
 
-  //          orderSelect.CherishOrderCheck = await _context.CherishOrderChecks.Where(o => o.CherishId == 6).FirstAsync();
+//    var orderSelect = await _context.CherishOrders.Where(o => o.CherishId == id).FirstAsync();
 
-  //          orderSelect.CherishOrderCheck!.CherishPhoto = "/img/cherish/6.jpg";
 
-  //          await _context.SaveChangesAsync();
+//    orderSelect.CherishOrderCheck = await _context.CherishOrderChecks.Where(o => o.CherishId == 6).FirstAsync();
 
-  //          return RedirectToAction("cherish");
-		//}
+//    orderSelect.CherishOrderCheck!.CherishPhoto = "/img/cherish/6.jpg";
 
-	}
+//    await _context.SaveChangesAsync();
+
+//    return RedirectToAction("cherish");
+//}
+
+    }
 }

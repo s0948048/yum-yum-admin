@@ -24,31 +24,19 @@
 
 		<!-- 搜尋列 -->
 		<div id="searchbar" class="ms-2 mb-2">
-			<form action="POST" class="d-flex justify-content-center align-items-center position-relative">
+			<form action="POST" class="d-flex align-items-center position-relative">
 				<!-- 地區 -->
-				<div>
-
+				
 					<select name="Attr" id="match-attr" class="d-inline-block p-1 rounded-1" asp-items="@ViewBag.Attr">
 						<option value="0">全部種類</option>
 					</select>
-				</div>
+				
 
 				<!-- 輸入文字框 -->
-				<div id="searchbar-text" class="ms-2 d-inline-flex align-items-center position-relative">
-					<input class="form-text col-8" placeholder="食材名稱" type="text" name="Food" id="match-name">
-					<button class="ms-2" id="food-filter" type="submit"
-							style="border: 0;border-radius: 18px; right:-1%; width:3.5rem ;height: 2.4rem;">
-						<svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-							<path d="M25.25 25.25L19.8125 19.8125M22.75
-                                12.75C22.75 18.2728 18.2728 22.75 12.75
-                                22.75C7.22715 22.75 2.75 18.2728 2.75
-                                12.75C2.75 7.22715 7.22715 2.75 12.75
-                                2.75C18.2728 2.75 22.75 7.22715 22.75 12.75Z" stroke="#757575" stroke-width="4"
-								  stroke-linecap="round" stroke-linejoin="round" />
-						</svg>
-					</button>
-
-				</div>
+				
+					<input class="ms-2 col-8 ps-1" placeholder="食材名稱" type="text" name="Food" id="match-name" style="height:2.1rem;width:12rem;">
+					
+				
 
 			</form>
 		</div>

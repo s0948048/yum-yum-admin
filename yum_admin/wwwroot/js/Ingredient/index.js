@@ -214,34 +214,66 @@ $('#del-popup-confirm').click(function () {
 // 檢查是否是一樣的篩選
 var Newmatchattr = '';
 var Newmatchname = '';
-// 右側篩選
-$('#food-filter').click(function (e) {
-	e.preventDefault();
-	e.stopPropagation();
-
+function sorting() {
 	var matchattr = $('#match-attr').val()
 	var matchname = $('#match-name').val()
 	if (matchattr == Newmatchattr && matchname == Newmatchname) {
 		return;
 	}
-		// 使用 AJAX 發送請求時附加防護令牌
-		$.ajax({
-			url: '/ingredients/FoodResult/',
-			method: 'POST',
-			contentType: 'application/json',
-			headers: { 'RequestVerificationToken': HTTPToken }, // 添加防護令牌
-			data: JSON.stringify({ attrId: matchattr, name: matchname }),
-			success: function (response) {
-				//console.log(`查詢成功`, response);
-				$('#insert-site').html(response)
-				Newmatchattr = matchattr;
-				Newmatchname = matchname;
-			},
-			error: function (xhr) {
-				console.log(`查詢失敗： ${xhr.responseJSON.message}`);
-			}
-		});		
-		
+	// 使用 AJAX 發送請求時附加防護令牌
+	$.ajax({
+		url: '/ingredients/FoodResult/',
+		method: 'POST',
+		contentType: 'application/json',
+		headers: { 'RequestVerificationToken': HTTPToken }, // 添加防護令牌
+		data: JSON.stringify({ attrId: matchattr, name: matchname }),
+		success: function (response) {
+			//console.log(`查詢成功`, response);
+			$('#insert-site').html(response)
+			Newmatchattr = matchattr;
+			Newmatchname = matchname;
+		},
+		error: function (xhr) {
+			console.log(`查詢失敗： ${xhr.responseJSON.message}`);
+		}
+	});
+
+}
+// 右側篩選
+$('#match-attr').on('change', function () {
+	sorting();
 })
+$('#match-name').on('input', function () {
+	sorting();
+})
+
+//$('#food-filter').click(function (e) {
+//	e.preventDefault();
+//	e.stopPropagation();
+
+//	var matchattr = $('#match-attr').val()
+//	var matchname = $('#match-name').val()
+//	if (matchattr == Newmatchattr && matchname == Newmatchname) {
+//		return;
+//	}
+//		// 使用 AJAX 發送請求時附加防護令牌
+//		$.ajax({
+//			url: '/ingredients/FoodResult/',
+//			method: 'POST',
+//			contentType: 'application/json',
+//			headers: { 'RequestVerificationToken': HTTPToken }, // 添加防護令牌
+//			data: JSON.stringify({ attrId: matchattr, name: matchname }),
+//			success: function (response) {
+//				//console.log(`查詢成功`, response);
+//				$('#insert-site').html(response)
+//				Newmatchattr = matchattr;
+//				Newmatchname = matchname;
+//			},
+//			error: function (xhr) {
+//				console.log(`查詢失敗： ${xhr.responseJSON.message}`);
+//			}
+//		});		
+		
+//})
 
 
