@@ -49,7 +49,7 @@ namespace yum_admin.Controllers
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "UserSecretInfoes");
             }
 
             ModelState.AddModelError("", "Invalid email or password");
