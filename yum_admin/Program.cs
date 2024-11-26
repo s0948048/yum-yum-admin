@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -5,6 +6,16 @@ using yum_admin.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Login ------
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login"; // Login page
+        //options.AccessDeniedPath = "/Account/AccessDenied"; // Optional: specify an access denied page
+    });
+
+builder.Services.AddAuthorization();
+// Login ------
 
 builder.Services.AddCors(options =>
 {
@@ -23,20 +34,21 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<YumyumdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("YumYumDB")));
 
-
-// Add services to the container.
-builder.Services.AddControllersWithViews()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
-        options.JsonSerializerOptions.Encoder =
-            JavaScriptEncoder.Create(
-                UnicodeRanges.BasicLatin,
-                UnicodeRanges.CjkUnifiedIdeographs
-            );
-        options.JsonSerializerOptions.WriteIndented = true;
-    });
-
+builder.Services.AddControllersWithViews(options =>
+{
+    // Apply global [Authorize] filter
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter());
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    options.JsonSerializerOptions.Encoder =
+        JavaScriptEncoder.Create(
+            UnicodeRanges.BasicLatin,
+            UnicodeRanges.CjkUnifiedIdeographs
+        );
+    options.JsonSerializerOptions.WriteIndented = true;
+});
 
 var app = builder.Build();
 
@@ -55,6 +67,8 @@ app.UseCors("LiveServer");
 
 app.UseRouting();
 
+// Use Auth and Author
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

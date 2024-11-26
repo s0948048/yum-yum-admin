@@ -76,13 +76,17 @@
                    
 
                     <div class="dropdown navbar-nav ml-auto">
-                        <a class="nav-link  dropdown-toggle me-3" style="" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                        </a>
-                        <div class="dropdown-menu top-100 " style="right:1rem" aria-labelledby="dropdownMenuButton">
-                           
-                            <a class="dropdown-item" href="#">登出</a>
-                        </div>
+                        @if (User.Identity!.IsAuthenticated)
+                        {
+                            <a class="nav-link  dropdown-toggle me-3" style="" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">@User.Identity.Name</span>
+                            </a>
+                            <div class="dropdown-menu top-100 " style="right:1rem" aria-labelledby="dropdownMenuButton">
+                                <form asp-action="Logout" asp-controller="Auth" method="post" class="dropdown-item p-0">
+                                    <button type="submit" class="btn btn-link p-0 text-start w-100">登出</button>
+                                </form>
+                            </div>
+                        }
                     </div>
 
 
