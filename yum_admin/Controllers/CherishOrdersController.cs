@@ -51,8 +51,6 @@ namespace yum_admin.Controllers
             return View(await cherishOrders.ToListAsync());
         }
 
-        
-        
         // GET: CherishOrders
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -161,7 +161,7 @@ namespace yum_admin.Controllers
 									.ToListAsync();
 
 			// 食譜沒有就跳過。
-			if(ingredientRefrig.Any())
+			if(ingredientRecord.Count != 0)
 			{
 				// 1. 把食譜中的食材替換
 				// 1.1. 抓取有關連的食譜們
@@ -171,7 +171,6 @@ namespace yum_admin.Controllers
 					// 有件事情要注意，假設 1399,14 1399,15 要同時換成 1399,16 會有兩筆造成衝突
 					if (newRecipeIngredients.Any(res => res.RecipeId == r.RecipeId))
 					{
-						_context.RecipeIngredients.Remove(r);
 						continue;
 					}
 					newRecipeIngredients.Add(new RecipeIngredient
@@ -179,8 +178,8 @@ namespace yum_admin.Controllers
 						RecipeId = r.RecipeId,
 						IngredientId = f.afterFood,
 						UnitId = r.UnitId,
-						Quantity = r.Quantity,
-					});
+						Quantity = r.Quantity
+                    });
 				}
 
 				// 1.2. 因為有暫存ㄌ，所以直接移除他們！
@@ -192,11 +191,25 @@ namespace yum_admin.Controllers
 				}
 				await _context.SaveChangesAsync();
 
-				// 再貼回去資料庫。
-				using (var scope = _serviceProvider.CreateScope())
+
+				var newL = newRecipeIngredients
+					.Select(item => (item.RecipeId, item.IngredientId))
+					.ToList();
+
+				var againL = _context.RecipeIngredients.ToList()
+                    .Where(item => newL.Contains((item.RecipeId, item.IngredientId)))
+                    .Select(item => (item.RecipeId, item.IngredientId))
+					.ToList();
+
+				newRecipeIngredients = newRecipeIngredients
+                    .Where(item => !againL.Contains((item.RecipeId, item.IngredientId)))
+					.ToList();
+
+                // 再貼回去資料庫。
+                using (var scope = _serviceProvider.CreateScope())
 				{
 					var newContext = scope.ServiceProvider.GetRequiredService<YumyumdbContext>();
-					context.ChangeTracker.Clear();
+                    newContext.ChangeTracker.Clear();
 
 					await newContext.RecipeIngredients.AddRangeAsync(newRecipeIngredients);
 
