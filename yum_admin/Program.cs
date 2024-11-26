@@ -73,6 +73,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=CherishOrders}/{action=edit}/{id=1}");
+    pattern: "{controller=UserSecretInfoes}/{action=index}/{id=1}");
 
 app.Run();
