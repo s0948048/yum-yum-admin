@@ -24,11 +24,12 @@ namespace yum_admin.Controllers
 		// GET: Ingredients
 		public async Task<IActionResult> Index()
 		{
-			ViewBag.Attr = new SelectList(_context.IngredAttributes, "IngredAttributeId", "IngredAttributeName");
+			ViewBag.Attr = new SelectList(_context.IngredAttributes.Where(o=>o.IngredAttributeId!=9), "IngredAttributeId", "IngredAttributeName");
 
 			// 右側預設
 			List<IngredientInfo> allIngredient = await (from i in _context.Ingredients
-														select new IngredientInfo
+                                                        where i.AttributionId != 9
+                                                        select new IngredientInfo
 														{
 															id = i.IngredientId,
 															name = i.IngredientName,
@@ -83,7 +84,8 @@ namespace yum_admin.Controllers
 											(f.attrId == 0 || i.AttributionId == f.attrId)
 										)
 									)
-							  select new IngredientInfo
+                              where i.AttributionId != 9
+                              select new IngredientInfo
 							  {
 								  id = i.IngredientId,
 								  name = i.IngredientName,
