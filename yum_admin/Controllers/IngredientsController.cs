@@ -113,13 +113,12 @@ namespace yum_admin.Controllers
 			{
 				Ingredient ingredient = new Ingredient
 				{
-					IngredientId = i.id,
 					IngredientName = i.name,
 					AttributionId = i.attrId,
 					IngredientIcon = i.icon
 				};
 
-				
+				await _context.Ingredients.AddAsync(ingredient);
 				await _context.SaveChangesAsync();
 				return RedirectToAction("Index");
 			}

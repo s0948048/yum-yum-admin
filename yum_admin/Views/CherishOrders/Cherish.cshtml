@@ -64,7 +64,7 @@
             <div class="col col-2">食材名稱</div>
             <div class="col col-3">食材分類</div>
             <div class="col col-4">異常原因</div>
-            <div class="col col-5">上架日期</div>
+            <div class="col col-5"></div>
             <div class="col col-5">異動日期</div>
             <div class="col col-6"></div>
         </li>
@@ -113,8 +113,9 @@
                     <div class="col col-3">@cInfo.IngredAttributeName</div>
                     <div class="col col-4">@cInfo.ReasonText</div>
                     <div class="col col-5">
-                            @(cInfo.ReserveDate == null ? "無備註" : ((DateTime)cInfo.ReserveDate).ToString("yyyy-MM-dd"))
-
+                            @* @(cInfo.ReserveDate == null ? "無備註" : ((DateTime)cInfo.ReserveDate).ToString("yyyy-MM-dd"))
+                            *@
+                            |
                     </div>
                     <div class="col col-5">
 

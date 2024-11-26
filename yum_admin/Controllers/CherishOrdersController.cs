@@ -30,20 +30,24 @@ namespace yum_admin.Controllers
                 "IngredAttributeName"
                 );
 
-            var cherishOrders = from c in _context.CherishOrders
-                                where cherishAttr.Contains(c.IngredAttributeId)
-                                select new CherishIndexDto
-                                {
-                                    CherishId = c.CherishId,
-                                    TradeStateDescript = c.TradeStateCodeNavigation.TradeStateDescript,
-                                    TradeStateCode = c.TradeStateCodeNavigation.TradeStateCode,
-                                    IngredientName = c.Ingredient.IngredientName,
-                                    IngredAttributeName = c.IngredAttribute.IngredAttributeName,
-                                    ReasonText = c.CherishOrderCheck!.RejectText,
-                                    SubmitDate = c.SubmitDate,
-                                    ReserveDate = c.ReserveDate,
-                                    ModifyDate = c.CherishOrderCheck.ModifyDate
-                                };
+            var cherishOrders = _context.CherishOrders
+                .Where(c=>cherishAttr.Contains(c.IngredAttributeId))
+                .OrderBy(c=>c.TradeStateCode)
+                .ThenBy(c=>c.CherishOrderCheck!.ModifyDate)
+                .Select(c=>new CherishIndexDto
+                {
+                    CherishId = c.CherishId,
+                    TradeStateDescript = c.TradeStateCodeNavigation.TradeStateDescript,
+                    TradeStateCode = c.TradeStateCodeNavigation.TradeStateCode,
+                    IngredientName = c.Ingredient.IngredientName,
+                    IngredAttributeName = c.IngredAttribute.IngredAttributeName,
+                    ReasonText = c.CherishOrderCheck!.RejectText,
+                    SubmitDate = c.SubmitDate,
+                    ReserveDate = c.ReserveDate,
+                    ModifyDate = c.CherishOrderCheck.ModifyDate
+                });
+
+            
             return View(await cherishOrders.ToListAsync());
         }
 
@@ -61,23 +65,32 @@ namespace yum_admin.Controllers
                 return new BadRequestObjectResult(new { sucess = false, message = "傳入錯誤的訂單狀態" });
             }
 
-            
+            IQueryable<CherishOrder> query = _context.CherishOrders;
             List<int> cherishAttr = [1, 4, 5, 6];
-            var cherishOrders = (from c in _context.CherishOrders
-                                where cherishAttr.Contains(c.IngredAttributeId)
-                                where (  s.tradeCode == 99 ||  c.TradeStateCode == s.tradeCode)
-                                select new CherishIndexDto
-                                {
-                                    CherishId = c.CherishId,
-                                    TradeStateDescript = c.TradeStateCodeNavigation.TradeStateDescript,
-                                    TradeStateCode = c.TradeStateCodeNavigation.TradeStateCode,
-                                    IngredientName = c.Ingredient.IngredientName,
-                                    IngredAttributeName = c.IngredAttribute.IngredAttributeName,
-                                    ReasonText = c.CherishOrderCheck!.RejectText,
-                                    SubmitDate = c.SubmitDate,
-                                    ReserveDate = c.ReserveDate,
-                                    ModifyDate = c.CherishOrderCheck.ModifyDate
-                                }).OrderByDescending( c => c.ModifyDate );
+
+            query = query.Where(o => cherishAttr.Contains(o.IngredAttributeId));
+            if(s.tradeCode == 0)
+            {
+                query = query.Where(o => o.TradeStateCode == 2 || o.TradeStateCode == 0);
+            }
+            else
+            {
+                query = query.Where(o => s.tradeCode == 99 || o.TradeStateCode == s.tradeCode);
+            }
+            var cherishOrders = query.OrderBy(o=>o.CherishOrderCheck!.ModifyDate).Select(c => new CherishIndexDto
+            {
+                CherishId = c.CherishId,
+                TradeStateDescript = c.TradeStateCodeNavigation.TradeStateDescript,
+                TradeStateCode = c.TradeStateCodeNavigation.TradeStateCode,
+                IngredientName = c.Ingredient.IngredientName,
+                IngredAttributeName = c.IngredAttribute.IngredAttributeName,
+                ReasonText = c.CherishOrderCheck!.RejectText,
+                SubmitDate = c.SubmitDate,
+                ReserveDate = c.ReserveDate,
+                ModifyDate = c.CherishOrderCheck.ModifyDate
+            });
+
+
 
             return PartialView("_PartialView_FilterOders",await cherishOrders.ToListAsync());
         }
@@ -317,7 +330,15 @@ namespace yum_admin.Controllers
                 case (byte)2:
                     var order2 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
                     order2.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order2.CherishId).First();
-                    order2.TradeStateCode = o.stateCode;
+                    //if(order2.ReserveDate <= DateTime.Now || order2.ReserveDate is null)
+                    //{
+                    //    order2.TradeStateCode = 0;
+                    //}else if(order2.ReserveDate > DateTime.Now)
+                    //{
+                    //    order2.TradeStateCode = o.stateCode;
+                    //}
+                    order2.TradeStateCode = 0;
+                    order2.CherishOrderCheck.ModifyDate = DateOnly.FromDateTime(DateTime.Now);
                     order2.CherishOrderCheck.ReasonId = null;
                     order2.CherishOrderCheck.RejectText = null;
                     await _context.SaveChangesAsync();
@@ -326,6 +347,7 @@ namespace yum_admin.Controllers
                     var order3 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
                     order3.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order3.CherishId).First();
                     order3.TradeStateCode = o.stateCode;
+                    order3.CherishOrderCheck.ModifyDate = DateOnly.FromDateTime(DateTime.Now);
                     order3.CherishOrderCheck.ReasonId = o.reasonId;
                     order3.CherishOrderCheck.RejectText = o.rejectText;
                     await _context.SaveChangesAsync();
@@ -334,6 +356,7 @@ namespace yum_admin.Controllers
                     var order4 = _context.CherishOrders.Where(c => c.CherishId == o.orderId).First();
                     order4.CherishOrderCheck = _context.CherishOrderChecks.Where(ck => ck.CherishId == order4.CherishId).First();
                     order4.TradeStateCode = o.stateCode;
+                    order4.CherishOrderCheck.ModifyDate = DateOnly.FromDateTime(DateTime.Now);
                     order4.CherishOrderCheck.ReasonId = o.reasonId;
                     order4.CherishOrderCheck.RejectText = null;
                     await _context.SaveChangesAsync();
@@ -382,22 +405,22 @@ namespace yum_admin.Controllers
             return Ok(new { token = tokens.RequestToken });
         }
 
-		//[HttpGet]
-		//public async Task< IActionResult > test(int id)
-		//{
-            
-
-  //          var orderSelect = await _context.CherishOrders.Where(o => o.CherishId == id).FirstAsync();
+//[HttpGet]
+//public async Task<IActionResult> test(int id)
+//{
 
 
-  //          orderSelect.CherishOrderCheck = await _context.CherishOrderChecks.Where(o => o.CherishId == 6).FirstAsync();
+//    var orderSelect = await _context.CherishOrders.Where(o => o.CherishId == id).FirstAsync();
 
-  //          orderSelect.CherishOrderCheck!.CherishPhoto = "/img/cherish/6.jpg";
 
-  //          await _context.SaveChangesAsync();
+//    orderSelect.CherishOrderCheck = await _context.CherishOrderChecks.Where(o => o.CherishId == 6).FirstAsync();
 
-  //          return RedirectToAction("cherish");
-		//}
+//    orderSelect.CherishOrderCheck!.CherishPhoto = "/img/cherish/6.jpg";
 
-	}
+//    await _context.SaveChangesAsync();
+
+//    return RedirectToAction("cherish");
+//}
+
+    }
 }
