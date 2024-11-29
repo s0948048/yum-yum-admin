@@ -18,9 +18,19 @@
             <form asp-action="Create">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                 <div class="mb-3">
+                    <label asp-for="AdminName" class="form-label"></label>
+                    <input asp-for="AdminName" class="form-control" />
+                    <span asp-validation-for="AdminName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
                     <label asp-for="AdminAccount" class="form-label"></label>
                     <input asp-for="AdminAccount" class="form-control" />
                     <span asp-validation-for="AdminAccount" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="AdminEmail" class="form-label"></label>
+                    <input asp-for="AdminEmail" class="form-control" />
+                    <span asp-validation-for="AdminEmail" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
                     <label asp-for="AdminPassword" class="form-label"></label>
@@ -32,16 +42,8 @@
                     </div>
                     <span asp-validation-for="AdminPassword" class="text-danger"></span>
                 </div>
-                <div class="mb-3">
-                    <label asp-for="AdminName" class="form-label"></label>
-                    <input asp-for="AdminName" class="form-control" />
-                    <span asp-validation-for="AdminName" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="AdminEmail" class="form-label"></label>
-                    <input asp-for="AdminEmail" class="form-control" />
-                    <span asp-validation-for="AdminEmail" class="text-danger"></span>
-                </div>
+                
+                
                @*  <div class="mb-3">
                     <label asp-for="AdminHeadShot" class="form-label"></label>
                     <input asp-for="AdminHeadShot" class="form-control" />

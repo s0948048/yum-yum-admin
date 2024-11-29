@@ -199,6 +199,11 @@ namespace yum_admin.Controllers
         {
             return _context.RecipeBriefs.Any(e => e.RecipeId == id);
         }
+
+
+
+
+
         public IActionResult Recipe()
         {
             // Step 1: 查詢最新的 RecipeRecords 和 RecipeRecordFields，並保持在資料庫內
@@ -234,6 +239,7 @@ namespace yum_admin.Controllers
                                join latestField in latestRecipeFields
                                    on new { RecipeId = brief.RecipeId, RecipeField = field.RecipeField }
                                       equals new { RecipeId = latestField.RecipeId, RecipeField = latestField.LatestField }
+                               where state.RecipeStateCode != 0 && state.RecipeStateCode != 5 // 排除條件
                                select new RecipeViewModel
                                {
                                    RecipeStateDescription = state.RecipeStateDescript,
@@ -251,7 +257,7 @@ namespace yum_admin.Controllers
             return View(recipes);
         }
 
-         public async Task<IActionResult> RecipeDetail(int recipeId)
+        public async Task<IActionResult> RecipeDetail(int recipeId)
         {
             // 查詢 RecipeBrief
             var recipeBrief = await _context.RecipeBriefs
@@ -268,7 +274,7 @@ namespace yum_admin.Controllers
 
             // 查詢 RecipeRecords（版本資料）
             var recipeVersions = await _context.RecipeRecords
-                .Where(r => r.RecipeId == recipeId)
+                .Where(r => r.RecipeId == recipeId && r.RecipeStatusCode != 0 && r.RecipeStatusCode != 5) // 排除條件
                 .OrderByDescending(r => r.RecipeRecVersion)
                 .Select(r => new RecipeVersionDetail
                 {
@@ -312,6 +318,9 @@ namespace yum_admin.Controllers
                 }
             }
 
+            // 取得最新版本的 RecipeStatusCode
+            var latestRecipeStatusCode = recipeVersions.FirstOrDefault()?.RecipeStatusCode ?? 0;
+
             // 組裝 ViewModel
             var viewModel = new RecipeDetailViewModel
             {
@@ -320,12 +329,13 @@ namespace yum_admin.Controllers
                 MaxVersion = recipeVersions.Max(r => r.RecipeRecVersion),
                 PrevVersions = recipeVersions,
                 RecipeFieldsByVersion = recipeFieldsByVersion ?? new List<RecipeFieldGroupedByVersion>(),
-                RecipeRecDate = recipeVersions.FirstOrDefault()?.RecipeRecDate ?? DateTime.MinValue
+                RecipeRecDate = recipeVersions.FirstOrDefault()?.RecipeRecDate ?? DateTime.MinValue,
+                RecipeStatusCode = latestRecipeStatusCode // 傳遞最新版本的狀態碼
             };
-
 
             return View(viewModel);
         }
+
 
 
         [HttpPost]

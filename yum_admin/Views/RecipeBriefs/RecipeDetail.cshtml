@@ -1,53 +1,23 @@
 ﻿@using yum_admin.Models.ViewModels
 @model yum_admin.Models.ViewModels.RecipeDetailViewModel
-
-<!--狀態欄最後一顆按鈕樣式-->
+@using Newtonsoft.Json;
 
 @functions {
-    private static readonly Dictionary<int, string> StatusBackgroundColors = new()
+    private static readonly Dictionary<int, (string CssClass, string Text)> StatusDefinitions = new()
     {
-        { 0, "background-color: #d3d3d3; color: #000;" }, // light
-        { 1, "background-color: #ffc107; color: #000;" }, // Warning
-        { 2, "background-color: #dc3545; color: #fff;" },  // Danger
-        { 3, "background-color: #ffc107; color: #000;" }, // Warning
-        { 4, "background-color: #6c757d; color: #fff;" }, // Secondary
-        { 5, "background-color: #dc3545; color: #fff;" }  // Danger
+        { 0, ("btn-secondary", "草稿") },        
+        { 1, ("btn-primary text-light", "新上架") },
+        { 2, ("btn-danger text-light", "退回請改") },
+        { 3, ("btn-warning text-light", "待審查") },
+        { 4, ("btn-success text-light", "已確認") },
+        { 5, ("btn-secondary", "已隱藏") }       
     };
 
-    private static readonly Dictionary<int, string> StatusTextColors = new()
+    private (string CssClass, string Text) GetStatusInfo(int stateCode)
     {
-        { 0, "text-muted" },      // 草稿
-        { 1, "text-muted" },      // 審核中
-        { 2, "text-danger" },      // 審核中
-        { 3, "text-muted" },      // 審核中
-        { 4, "text-secondary" },  // 已確認
-        { 5, "text-danger" }      // 已隱藏
-    };
-
-    private static readonly Dictionary<int, string> StatusTexts = new()
-    {
-        { 0, "草稿-不需審核" },
-        { 1, "審核中" },
-        { 2, "審核中" },
-        { 3, "審核中" },
-        { 4, "已確認" },
-        { 5, "已隱藏" }
-    };
-
-    private string GetCircleBackgroundColor(int statusCode)
-    {
-      
-        return StatusBackgroundColors.TryGetValue(statusCode, out var color) ? color : "background-color: #6c757d; color: #fff;"; // Default
-    }
-
-    private string GetTextColor(int statusCode)
-    {
-        return StatusTextColors.TryGetValue(statusCode, out var textColor) ? textColor : "text-muted"; // Default
-    }
-
-    private string GetStatusText(int statusCode)
-    {
-        return StatusTexts.TryGetValue(statusCode, out var text) ? text : "未知狀態"; // Default
+        return StatusDefinitions.TryGetValue(stateCode, out var info)
+            ? info
+            : ("btn-secondary text-muted", "未知狀態");
     }
 }
 
@@ -55,48 +25,48 @@
 
 <!--食譜標題-->
 <div class="container">
-
     <ul class="responsive-table">
         <li class="table-row">
-            <div class="col col-1 StatusNew" data-label="RecipeStateDescript" id="StatusNew">
-                <label class="btn-outline-success btn rounded-5 align-content-center fw-400" for="IAttr-1">
-                    <span>新上架</span>
-                </label>
+
+            <!-- 動態生成狀態按鈕 -->
+            @{
+                var statusInfo = GetStatusInfo(Model.RecipeStatusCode);
+            }
+            <div class="status-label @statusInfo.CssClass rounded-5 align-content-center fw-400">
+                <span>@statusInfo.Text</span>
             </div>
 
-            <div class="col col-2" data-label="RecipeName">@Model.RecipeName</div>
+
+            <!-- 其他欄位 -->
+            <div class="col col-2 ps-5" data-label="RecipeName">@Model.RecipeName</div>
             <div class="col col-3" data-label="UserName">@Model.UserNickname</div>
             <div class="col col-4" data-label="RecipeSteps"></div>
-            <div class="col col-5" data-label="ModificationDate">@Model.RecipeRecDate.ToString("yyyy-MM-dd")</div>
+            <div class="col col-5" data-label="ModificationDate">
+                @Model.RecipeRecDate.ToString("yyyy-MM-dd")
+            </div>
         </li>
     </ul>
 </div>
 
 
+
 <div class="container p-3">
 
     <!-- 狀態欄樣式 -->
-    <div class="status-bar d-flex justify-content-around align-items-center py-3 mb-4 bg-light border rounded">
-        @if (Model.RecipeFieldsByVersion != null)
-        {
+    <div class="container p-3">
+        <div class="status-bar d-flex justify-content-around align-items-center py-3 mb-4 bg-light border rounded">
             @foreach (var version in Model.RecipeFieldsByVersion)
             {
-                 <div class="step text-center">
-                    <div class="circle rounded-circle d-flex justify-content-center align-items-center"
-                         style="width: 40px; height: 40px;
-                     @GetCircleBackgroundColor(version.RecipeStatusCode)">
+                var versionInfo = GetStatusInfo(version.RecipeStatusCode);
+                <div class="step text-center">
+                    <div class="circle @versionInfo.CssClass d-flex justify-content-center align-items-center"
+                         style="width: 40px; height: 40px; border-radius: 50%;">
                         @version.RecipeRecVersion
                     </div>
-                    <div class="@GetTextColor(version.RecipeStatusCode)">
-                        @GetStatusText(version.RecipeStatusCode)
-                    </div>
+                    <div class="text-center mt-2">@versionInfo.Text</div>
                 </div>
             }
-        }
-        else
-        {
-            <p>No versions available.</p>
-        }
+        </div>
     </div>
 
 
@@ -112,8 +82,8 @@
                 <div class="table-box">
                     <div class="status-label mb-2">
                         <h5 class="text-success">對照組</h5>
-                        <h6 colspan="5" style="background-color: #f8f8f8; font-weight: bold;">
-                            版本號: @versionGroup.RecipeRecVersion
+                        <h6 colspan="5" style="background-color: #f8f8f8; font-weight: bold ;">
+                            <span class="text-dark">版本號: @versionGroup.RecipeRecVersion</span>
                         </h6>
                     </div>
                     <table class="table table-bordered table-hover">
@@ -220,42 +190,46 @@
 @section Scripts {
 
 <script>
-$(document).ready(function () {
-    $("#approveRecipeBtn").click(function () {
-        var recipeId = @Model.RecipeId;  // 假設模型中有 RecipeId
-        var recipeRecVersion = @Model.MaxVersion;  // 假設模型中有 MaxVersion
+        $(document).ready(function () {
+            $("#approveRecipeBtn").click(function () {
+                var recipeId = @Model.RecipeId;  // 假設模型中有 RecipeId
+                var recipeRecVersion = @Model.MaxVersion;  // 假設模型中有 MaxVersion
 
-        // 發送 AJAX 請求
-        $.ajax({
-            url: '/RecipeBriefs/Approved',
-            type: 'POST',
-            data: {
-                recipeId: recipeId,
-                recipeRecVersion: recipeRecVersion
-            },
-            success: function (response) {
-                // 根據返回的結果顯示 Alert 訊息
-                var alertMessage = response.message;
-                var success = response.success;
+                // 發送 AJAX 請求
+                $.ajax({
+                    url: '/RecipeBriefs/Approved',
+                    type: 'POST',
+                    data: {
+                        recipeId: recipeId,
+                        recipeRecVersion: recipeRecVersion
+                    },
+                    success: function (response) {
+                        // 根據返回的結果顯示 Alert 訊息
+                        var alertMessage = response.message;
+                        var success = response.success;
 
-                showAlert(alertMessage, success);
-            },
-            error: function () {
-                showAlert("發生錯誤，請稍後再試！", false);
+                        showAlert(alertMessage, success);
+
+                        // 如果成功，跳轉到 Recipe 頁面
+                        if (success) {
+                            window.location.href = '/RecipeBriefs/Recipe'; // 替換為你的目標頁面路徑
+                        }
+                    },
+                    error: function () {
+                        showAlert("發生錯誤，請稍後再試！", false);
+                    }
+                });
+            });
+
+            function showAlert(message, success) {
+                // 設定顯示訊息
+                if (success) {
+                    alert("成功：" + message);
+                } else {
+                    alert("錯誤：" + message);
+                }
             }
         });
-    });
-
-    function showAlert(message, success) {
-        // 設定顯示訊息
-        if (success) {
-            alert("成功：" + message);
-        } else {
-            alert("錯誤：" + message);
-        }
-    }
-});
-
 
 
 

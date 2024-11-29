@@ -22,11 +22,13 @@
             <input class="me-1" type="radio" name="sort" value="3" id="wait" /><label for="wait" class="me-3">待審核</label>
             <input class="me-1" type="radio" name="sort" value="2" id="edit" /><label for="fail" class="me-3">退回請改</label>
             <input class="me-1" type="radio" name="sort" value="4" id="retn" /><label for="approve" class="me-3">已確認</label>
-            <input class="me-1" type="radio" name="sort" value="0" id="edit" /><label for="draft" class="me-3">草稿</label>
+            @* <input class="me-1" type="radio" name="sort" value="0" id="edit" /><label for="draft" class="me-3">草稿</label> *@
 
 
         </div>
     </div>
+
+
 
     <!-- 表頭 -->
     <ul class="responsive-table">
@@ -162,6 +164,7 @@
 @section Scripts {
 
     <script>
+       
         //state篩選
         document.addEventListener("DOMContentLoaded", function () {
             const radios = document.querySelectorAll('input[name="sort"]');
