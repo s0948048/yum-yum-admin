@@ -11380,7 +11380,7 @@ h1, h2, h3, h4, h5,
     .table thead th {
         border: none;
         padding: 10px;
-        font-size: 13px;
+        font-size: 18px;
         font-weight: 500;
         color: gray;
     }
@@ -11402,7 +11402,7 @@ h1, h2, h3, h4, h5,
     .table tbody th, .table tbody td {
         border: none;
         padding: 10px;
-        font-size: 14px;
+        font-size: 18px;
         background: #fff;
         vertical-align: middle;
     }
@@ -11452,12 +11452,12 @@ h1, h2, h3, h4, h5,
         }
 
             .table tbody td .email span:last-child {
-                font-size: 12px;
+                font-size: 14px;
                 color: rgba(0, 0, 0, 0.3);
             }
 
         .table tbody td .close span {
-            font-size: 12px;
+            font-size: 14px;
             color: #dc3545;
         }
 
