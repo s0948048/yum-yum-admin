@@ -11379,7 +11379,7 @@ h1, h2, h3, h4, h5,
 
     .table thead th {
         border: none;
-        padding: 30px;
+        padding: 10px;
         font-size: 13px;
         font-weight: 500;
         color: gray;
@@ -11401,7 +11401,7 @@ h1, h2, h3, h4, h5,
 
     .table tbody th, .table tbody td {
         border: none;
-        padding: 30px;
+        padding: 10px;
         font-size: 14px;
         background: #fff;
         vertical-align: middle;
