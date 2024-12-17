@@ -5,14 +5,14 @@
 .vscode/
 
 # Ignore all image files
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.svg
-*.webp
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
+# *.bmp
+# *.tiff
+# *.svg
+# *.webp
 
 # macOS
 .DS_Store
@@ -40,6 +40,7 @@ obj/
 appsettings.Development.json
 appsettings.Production.json
 appsettings.*.json
+appsettings.json
 
 # Ignore environment specific files
 .env
